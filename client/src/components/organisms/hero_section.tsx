@@ -41,7 +41,7 @@ export const F_Hero_Section: React.FC<Hero_Section_Props> = ({
                     {/* CTAs */}
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <F_Button
-                            p_label={F_Get_Text('hero.cta_primary')}
+                            p_label={F_Get_Text('home.cta.request_installation')}
                             p_variant="primary"
                             p_on_click={p_on_cta_click}
                             p_class_name="text-lg px-8 py-4"

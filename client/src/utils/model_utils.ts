@@ -7,6 +7,7 @@ export interface I_Model_Config {
     minute_limit_rpm: number;
     current_usage_today: number;
     is_primary: boolean;
+    cost_per_request?: number;
 }
 
 const STORAGE_KEY_USAGE = 'kabak_ai_model_usage';

@@ -8,6 +8,7 @@ import { F_Collection_Page } from '../pages/collection/collection_page';
 import { F_New_Product_Page } from '../pages/new_product/new_product_page';
 import { F_Product_Page } from '../pages/product/product_page';
 // Settings removed
+import { F_Auth_Guard } from '../layout/auth_guard';
 
 export const app_router = createBrowserRouter([
     {
@@ -24,14 +25,26 @@ export const app_router = createBrowserRouter([
     },
     {
         path: '/collection',
-        element: <F_Collection_Page />,
+        element: (
+            <F_Auth_Guard>
+                <F_Collection_Page />
+            </F_Auth_Guard>
+        ),
     },
     {
         path: '/new-product',
-        element: <F_New_Product_Page />,
+        element: (
+            <F_Auth_Guard>
+                <F_New_Product_Page />
+            </F_Auth_Guard>
+        ),
     },
     {
         path: '/product/:id',
-        element: <F_Product_Page />,
+        element: (
+            <F_Auth_Guard>
+                <F_Product_Page />
+            </F_Auth_Guard>
+        ),
     },
 ]);

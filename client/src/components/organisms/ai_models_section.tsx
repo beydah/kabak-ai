@@ -89,8 +89,8 @@ export const F_AI_Models_Section: React.FC = () => {
                                         <div
                                             key={model.model_id}
                                             className={`relative rounded-xl border-2 transition-all p-5 hover:bg-secondary/5 cursor-pointer group ${isPrimary
-                                                    ? 'border-primary/50 bg-primary/5'
-                                                    : 'border-secondary/20 bg-transparent'
+                                                ? 'border-primary/50 bg-primary/5'
+                                                : 'border-secondary/20 bg-transparent'
                                                 }`}
                                             onClick={(e) => F_Simulate_Usage(model.model_id, e)}
                                             title="Click to simulate usage"
@@ -144,33 +144,26 @@ export const F_AI_Models_Section: React.FC = () => {
 
                 {/* PRICING SIMULATOR */}
                 <div className="bg-white dark:bg-bg-dark rounded-2xl p-8 border border-secondary/20 shadow-sm max-w-2xl mx-auto text-center">
-                    <h3 className="text-xl font-bold mb-6 text-text-light dark:text-text-dark">Dynamic Pricing Simulation</h3>
-
-                    <div className="mb-8">
-                        <label className="block text-secondary text-sm mb-2">Estimated Tokens / Month</label>
-                        <input
-                            type="range"
-                            min="1000"
-                            max="1000000"
-                            step="1000"
-                            value={token_count}
-                            onChange={F_Handle_Token_Change}
-                            className="w-full h-2 bg-secondary/20 rounded-lg appearance-none cursor-pointer accent-primary"
-                        />
-                        <div className="flex justify-between mt-2 font-mono text-sm text-primary font-bold">
-                            <span>1K</span>
-                            <span className="text-lg">{token_count.toLocaleString()} Tokens</span>
-                            <span>1M</span>
-                        </div>
-                    </div>
+                    <h3 className="text-xl font-bold mb-6 text-text-light dark:text-text-dark">
+                        {F_Get_Text('pricing.title')}
+                    </h3>
 
                     <div className="p-6 bg-primary/5 rounded-xl border border-primary/20 mb-6">
-                        <span className="block text-secondary text-sm mb-1">Estimated Cost</span>
-                        <span className="text-4xl font-black text-text-light dark:text-text-dark">
-                            ${(token_count * base_rate).toFixed(2)}
+                        <span className="block text-secondary text-sm mb-1">
+                            {F_Get_Text('pricing.estimated_cost')}
                         </span>
-                        <span className="text-xs text-secondary mt-1">based on avg. usage</span>
+                        <span className="text-4xl font-black text-text-light dark:text-text-dark">
+                            {/* Calculate total cost dynamically based on usage of all models */}
+                            ${models.reduce((total, m) => total + (m.current_usage_today * (m.cost_per_request || 0)), 0).toFixed(4)}
+                        </span>
+                        <span className="text-xs text-secondary mt-1">
+                            {F_Get_Text('pricing.simulation_note')}
+                        </span>
                     </div>
+
+                    <p className="text-xs text-secondary mb-4">
+                        * Click on the model cards above to simulate usage and see the cost update!
+                    </p>
                 </div>
 
                 {/* API Info & RESET */}
@@ -178,10 +171,10 @@ export const F_AI_Models_Section: React.FC = () => {
                     <button
                         onClick={F_Reset_Usage}
                         className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/10 hover:bg-red-500/10 hover:text-red-500 rounded-lg text-sm text-secondary transition-colors cursor-pointer"
-                        title="Use this to reset simulation limits"
+                        title="Reset simulation"
                     >
                         <RotateCcw size={14} />
-                        <span>Resets Daily (Click to Reset Now)</span>
+                        <span>{F_Get_Text('pricing.reset')}</span>
                     </button>
                 </div>
             </div>

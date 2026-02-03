@@ -205,7 +205,11 @@
             "title": "Dinamik Fiyatlandırma",
             "estimated_cost": "Tahmini Maliyet",
             "simulation_note": "Maliyetler ortalama kullanım bazında hesaplanmıştır.",
-            "reset": "Simülasyonu Sıfırla"
+            "reset": "Simülasyonu Sıfırla",
+            "product_bundle": "Ürün Paketi",
+            "add_product": "Ürün Ekle",
+            "remove_product": "Ürün Çıkar",
+            "bundle_desc": "1 Metin + 4 Görsel + 1 Video"
         },
         "home": {
             "cta": {
@@ -424,7 +428,11 @@
             "title": "Dynamic Pricing",
             "estimated_cost": "Estimated Cost",
             "simulation_note": "Costs calculated based on average usage.",
-            "reset": "Reset Simulation"
+            "reset": "Reset Simulation",
+            "product_bundle": "Product Bundle",
+            "add_product": "Add Product",
+            "remove_product": "Remove Product",
+            "bundle_desc": "1 Text + 4 Images + 1 Video"
         },
         "home": {
             "cta": {

@@ -9,7 +9,10 @@ interface Hero_Section_Props {
 }
 
 export const F_Hero_Section: React.FC<Hero_Section_Props> = ({
-    p_on_cta_click,
+    p_on_cta_click = () => {
+        const element = document.getElementById('contact');
+        element?.scrollIntoView({ behavior: 'smooth' });
+    },
     p_on_learn_more,
 }) => {
     return (

@@ -6,7 +6,6 @@ import { F_Get_Text } from '../../utils/i18n_utils';
 
 const CONTACT_INFO = {
     email: 'info@beydahsaglam.com',
-    phone: '+90 555 123 4567',
 };
 
 const SOCIAL_LINKS = [
@@ -17,22 +16,10 @@ const SOCIAL_LINKS = [
         label: F_Get_Text('contact.links.github_personal')
     },
     {
-        key: 'github_brand',
-        icon: 'github',
-        url: 'https://github.com/beydah/kabak-ai',
-        label: F_Get_Text('contact.links.github_brand')
-    },
-    {
         key: 'linkedin',
         icon: 'linkedin',
         url: 'https://linkedin.com/in/beydah',
         label: F_Get_Text('contact.links.linkedin')
-    },
-    {
-        key: 'youtube',
-        icon: 'youtube',
-        url: 'https://youtube.com/beydahsaglam',
-        label: F_Get_Text('contact.links.youtube')
     },
     {
         key: 'website',
@@ -62,7 +49,7 @@ export const F_Contact_Section: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
                         {/* Email */}
-                        <div className="p-6 bg-secondary/10 rounded-2xl flex items-center gap-4">
+                        <div className="col-span-1 md:col-span-2 p-6 bg-secondary/10 rounded-2xl flex items-center justify-center gap-4">
                             <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
                                 <F_Icon p_name="email" p_size={24} p_class_name="text-primary" />
                             </div>
@@ -73,22 +60,6 @@ export const F_Contact_Section: React.FC = () => {
                                     className="font-medium text-text-light dark:text-text-dark hover:text-primary transition-colors"
                                 >
                                     {CONTACT_INFO.email}
-                                </a>
-                            </div>
-                        </div>
-
-                        {/* Phone */}
-                        <div className="p-6 bg-secondary/10 rounded-2xl flex items-center gap-4">
-                            <div className="w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                                <F_Icon p_name="phone" p_size={24} p_class_name="text-primary" />
-                            </div>
-                            <div className="text-left">
-                                <p className="text-sm text-secondary">{F_Get_Text('contact.phone_label')}</p>
-                                <a
-                                    href={`tel:${CONTACT_INFO.phone}`}
-                                    className="font-medium text-text-light dark:text-text-dark hover:text-primary transition-colors"
-                                >
-                                    {CONTACT_INFO.phone}
                                 </a>
                             </div>
                         </div>
@@ -110,14 +81,14 @@ export const F_Contact_Section: React.FC = () => {
                     {/* Social Links */}
                     <div>
                         <p className="text-sm text-secondary text-center mb-6">{F_Get_Text('contact.social_label')}</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                        <div className="flex justify-center flex-wrap gap-4">
                             {SOCIAL_LINKS.map((link) => (
                                 <a
                                     key={link.key}
                                     href={link.url}
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    className="p-4 bg-secondary/10 hover:bg-primary/10 border border-secondary/20 hover:border-primary/50 rounded-xl transition-all group"
+                                    className="p-4 bg-secondary/10 hover:bg-primary/10 border border-secondary/20 hover:border-primary/50 rounded-xl transition-all group min-w-[120px]"
                                 >
                                     <div className="flex flex-col items-center gap-2">
                                         <F_Icon

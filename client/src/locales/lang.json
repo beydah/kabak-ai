@@ -126,8 +126,7 @@
             "title": "Giriş Yap",
             "username_placeholder": "Kullanıcı adı",
             "password_placeholder": "Şifre",
-            "submit_button": "Giriş",
-            "forgot_password": "Şifremi Unuttum"
+            "submit_button": "Giriş"
         },
         "collection": {
             "title": "Koleksiyonlarım",
@@ -135,24 +134,62 @@
             "create_new": "Yeni Koleksiyon"
         },
         "new_product": {
-            "title": "Yeni Ürün Ekle",
-            "product_name": "Ürün Adı",
-            "upload_image": "Görsel Yükle",
-            "generate_button": "Oluştur"
+            "title": "Yeni Ürün Girişi",
+            "back_to_collection": "← Koleksiyona Dön",
+            "upload": {
+                "front": "Ön Fotoğraf",
+                "back": "Arka Fotoğraf",
+                "select_file": "Dosya Seçin"
+            },
+            "labels": {
+                "gender": "Cinsiyet",
+                "body_type": "Manken Vücut Tipi",
+                "fit": "Ürün Kesimi",
+                "background": "Arka Plan",
+                "accessory": "Aksesuar",
+                "age": "Manken Yaşı",
+                "description": "Ürün Açıklaması"
+            },
+            "options": {
+                "gender": {
+                    "female": "Kadın",
+                    "male": "Erkek"
+                },
+                "body_type": {
+                    "slim": "Zayıf",
+                    "average": "Ortalama",
+                    "plus_size": "Büyük Beden"
+                },
+                "fit": {
+                    "slim": "Dar Kesim",
+                    "regular": "Normal Kesim",
+                    "oversized": "Bol Kesim"
+                },
+                "background": {
+                    "black": "Siyah",
+                    "white": "Beyaz",
+                    "orange": "Turuncu",
+                    "cafe": "Kafe Ortamı",
+                    "urban": "Şehir Ortamı"
+                },
+                "accessory": {
+                    "none": "Yok",
+                    "bag": "Çanta",
+                    "glasses": "Gözlük",
+                    "wallet": "Cüzdan",
+                    "car_key": "Maserati Anahtarı"
+                }
+            },
+            "placeholders": {
+                "description": "Ürün detaylarını buraya girebilirsiniz..."
+            },
+            "generate_button": "Ürün Oluştur"
         },
         "product": {
             "title": "Ürün Detayı",
             "download": "İndir",
             "edit": "Düzenle",
             "delete": "Sil"
-        },
-        "settings": {
-            "title": "Ayarlar",
-            "language": "Dil",
-            "theme": "Tema",
-            "theme_light": "Açık",
-            "theme_dark": "Koyu",
-            "save": "Kaydet"
         }
     },
     "en": {
@@ -282,8 +319,7 @@
             "title": "Login",
             "username_placeholder": "Username",
             "password_placeholder": "Password",
-            "submit_button": "Login",
-            "forgot_password": "Forgot Password"
+            "submit_button": "Login"
         },
         "collection": {
             "title": "My Collections",
@@ -291,10 +327,56 @@
             "create_new": "New Collection"
         },
         "new_product": {
-            "title": "Add New Product",
-            "product_name": "Product Name",
-            "upload_image": "Upload Image",
-            "generate_button": "Generate"
+            "title": "New Product Entry",
+            "back_to_collection": "← Back to Collection",
+            "upload": {
+                "front": "Front Photo",
+                "back": "Back Photo",
+                "select_file": "Select File"
+            },
+            "labels": {
+                "gender": "Gender",
+                "body_type": "Model Body Type",
+                "fit": "Product Fit",
+                "background": "Background",
+                "accessory": "Accessory",
+                "age": "Model Age",
+                "description": "Product Description"
+            },
+            "options": {
+                "gender": {
+                    "female": "Female",
+                    "male": "Male"
+                },
+                "body_type": {
+                    "slim": "Slim",
+                    "average": "Average",
+                    "plus_size": "Plus-Size"
+                },
+                "fit": {
+                    "slim": "Slim Fit",
+                    "regular": "Regular Fit",
+                    "oversized": "Oversized"
+                },
+                "background": {
+                    "black": "Black",
+                    "white": "White",
+                    "orange": "Orange",
+                    "cafe": "Café",
+                    "urban": "Urban"
+                },
+                "accessory": {
+                    "none": "None",
+                    "bag": "Bag",
+                    "glasses": "Glasses",
+                    "wallet": "Wallet",
+                    "car_key": "Maserati Key"
+                }
+            },
+            "placeholders": {
+                "description": "Enter product details here..."
+            },
+            "generate_button": "Create Product"
         },
         "product": {
             "title": "Product Detail",

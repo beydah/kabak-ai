@@ -16,7 +16,7 @@ export default {
                 'text-dark': '#EAEFEF',
                 // Accent Colors
                 'primary': '#FF7F11',
-                'secondary': '#94A3B8',
+                'secondary': '#64748B',
             },
             backgroundColor: {
                 'app': 'var(--bg-app)',

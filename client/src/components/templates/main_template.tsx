@@ -14,7 +14,7 @@ export const F_Main_Template: React.FC<Main_Template_Props> = ({
     return (
         <div className="min-h-screen flex flex-col bg-bg-light dark:bg-bg-dark transition-colors">
             <F_Header p_is_authenticated={p_is_authenticated} />
-            <main className="flex-grow container mx-auto px-4 py-8">
+            <main className="flex-grow container mx-auto px-4 py-8 pt-24">
                 {children}
             </main>
             <F_Footer />

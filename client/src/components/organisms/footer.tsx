@@ -4,7 +4,7 @@ import { F_Get_Text } from '../../utils/i18n_utils';
 
 export const F_Footer: React.FC = () => {
     return (
-        <footer className="py-8 transition-colors bg-bg-dark text-text-dark dark:bg-bg-light dark:text-text-light border-t border-secondary/30">
+        <footer className="py-8 transition-colors bg-bg-dark text-text-dark dark:bg-[#1E293B] dark:text-text-dark border-t border-secondary/30">
             <div className="container mx-auto px-4">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="text-center md:text-left">

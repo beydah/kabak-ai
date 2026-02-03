@@ -1,40 +1,70 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Button } from '../../components/atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
+import { F_File_Upload } from '../../components/molecules/file_upload';
+import { F_Save_Product, I_Product_Data } from '../../utils/storage_utils';
+import { F_File_To_Base64 } from '../../utils/file_utils';
 
 export const F_New_Product_Page: React.FC = () => {
     const navigate = useNavigate();
 
-    // State for form
-    const [formData, setFormData] = useState({
+    // State for files
+    const [front_file, set_front_file] = useState<File | null>(null);
+    const [back_file, set_back_file] = useState<File | null>(null);
+
+    // State for form data
+    const [form_data, set_form_data] = useState({
         gender: 'female',
         body_type: 'average',
         fit: 'regular',
         background: 'orange',
         accessory: 'glasses',
-        age: 25,
+        age: 30, // Default changed to 30 as requested
         description: ''
     });
 
     const F_Handle_Change = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        set_form_data(prev => ({ ...prev, [name]: value }));
     };
 
-    const F_Handle_Submit = (p_event: React.FormEvent) => {
+    const F_Handle_Submit = async (p_event: React.FormEvent) => {
         p_event.preventDefault();
-        console.log('Creating product:', formData);
-        // Mock creation and redirect
-        const mockId = Math.random().toString(36).substring(7);
-        navigate(`/product/${mockId}`);
+
+        if (!front_file) {
+            alert("Please upload a front photo.");
+            return;
+        }
+
+        try {
+            // Convert images to Base64
+            const front_b64 = await F_File_To_Base64(front_file);
+            const back_b64 = back_file ? await F_File_To_Base64(back_file) : '';
+
+            const new_product: I_Product_Data = {
+                id: uuidv4(),
+                created_at: Date.now(),
+                front_image: front_b64,
+                back_image: back_b64,
+                ...form_data
+            };
+
+            F_Save_Product(new_product);
+            navigate('/collection');
+
+        } catch (error) {
+            console.error("Error creating product:", error);
+            alert("Failed to create product. Please try again.");
+        }
     };
 
     return (
         <F_Main_Template p_is_authenticated={true}>
-            <div className="max-w-2xl mx-auto">
+            <div className="max-w-4xl mx-auto">
 
                 {/* Back Link */}
                 <button
@@ -50,48 +80,37 @@ export const F_New_Product_Page: React.FC = () => {
                 </F_Text>
 
                 {/* Form Card */}
-                <div className="bg-white dark:bg-bg-dark rounded-xl shadow-lg border border-secondary/20 p-8">
+                <div className="bg-white dark:bg-bg-dark rounded-xl shadow-lg border border-secondary/20 p-6 md:p-8">
                     <form onSubmit={F_Handle_Submit} className="space-y-8">
 
-                        {/* 1. Media Uploads */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-secondary">
-                                    {F_Get_Text('new_product.upload.front')}
-                                </label>
-                                <div className="border-2 border-dashed border-secondary/40 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer bg-secondary/5">
-                                    <span className="text-secondary text-sm">
-                                        {F_Get_Text('new_product.upload.select_file')}
-                                    </span>
-                                    <input type="file" className="hidden" />
-                                </div>
-                            </div>
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-secondary">
-                                    {F_Get_Text('new_product.upload.back')}
-                                </label>
-                                <div className="border-2 border-dashed border-secondary/40 rounded-lg p-6 text-center hover:border-primary/50 transition-colors cursor-pointer bg-secondary/5">
-                                    <span className="text-secondary text-sm">
-                                        {F_Get_Text('new_product.upload.select_file')}
-                                    </span>
-                                    <input type="file" className="hidden" />
-                                </div>
-                            </div>
+                        {/* 1. Media Uploads (Side-by-Side) */}
+                        <div className="grid grid-cols-2 gap-4 md:gap-6">
+                            <F_File_Upload
+                                p_label={F_Get_Text('new_product.upload.front')}
+                                p_file={front_file}
+                                p_on_change={set_front_file}
+                            />
+                            <F_File_Upload
+                                p_label={F_Get_Text('new_product.upload.back')}
+                                p_file={back_file}
+                                p_on_change={set_back_file}
+                            />
                         </div>
 
                         {/* Separator */}
                         <hr className="border-secondary/20" />
 
-                        {/* 2. Model & Product Selections */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Gender */}
+                        {/* 2. Model & Product Selections (Grid Layout) */}
+                        <div className="grid grid-cols-2 gap-4 md:gap-6 gap-y-6">
+
+                            {/* Row 1: Gender <-> Age */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-secondary">
                                     {F_Get_Text('new_product.labels.gender')}
                                 </label>
                                 <select
                                     name="gender"
-                                    value={formData.gender}
+                                    value={form_data.gender}
                                     onChange={F_Handle_Change}
                                     className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 >
@@ -100,14 +119,29 @@ export const F_New_Product_Page: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Body Type */}
+                            <div className="space-y-2">
+                                <label className="block text-sm font-medium text-secondary">
+                                    {F_Get_Text('new_product.labels.age')}
+                                </label>
+                                <input
+                                    type="number"
+                                    name="age"
+                                    min={10}
+                                    max={50}
+                                    value={form_data.age}
+                                    onChange={F_Handle_Change}
+                                    className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                                />
+                            </div>
+
+                            {/* Row 2: Body Type <-> Fit */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-secondary">
                                     {F_Get_Text('new_product.labels.body_type')}
                                 </label>
                                 <select
                                     name="body_type"
-                                    value={formData.body_type}
+                                    value={form_data.body_type}
                                     onChange={F_Handle_Change}
                                     className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 >
@@ -117,14 +151,13 @@ export const F_New_Product_Page: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Fit */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-secondary">
                                     {F_Get_Text('new_product.labels.fit')}
                                 </label>
                                 <select
                                     name="fit"
-                                    value={formData.fit}
+                                    value={form_data.fit}
                                     onChange={F_Handle_Change}
                                     className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 >
@@ -134,14 +167,14 @@ export const F_New_Product_Page: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Background */}
+                            {/* Row 3: Background <-> Accessory */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-secondary">
                                     {F_Get_Text('new_product.labels.background')}
                                 </label>
                                 <select
                                     name="background"
-                                    value={formData.background}
+                                    value={form_data.background}
                                     onChange={F_Handle_Change}
                                     className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 >
@@ -153,14 +186,13 @@ export const F_New_Product_Page: React.FC = () => {
                                 </select>
                             </div>
 
-                            {/* Accessory */}
                             <div className="space-y-2">
                                 <label className="block text-sm font-medium text-secondary">
                                     {F_Get_Text('new_product.labels.accessory')}
                                 </label>
                                 <select
                                     name="accessory"
-                                    value={formData.accessory}
+                                    value={form_data.accessory}
                                     onChange={F_Handle_Change}
                                     className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                                 >
@@ -171,22 +203,6 @@ export const F_New_Product_Page: React.FC = () => {
                                     <option value="car_key">{F_Get_Text('new_product.options.accessory.car_key')}</option>
                                 </select>
                             </div>
-
-                            {/* Age */}
-                            <div className="space-y-2">
-                                <label className="block text-sm font-medium text-secondary">
-                                    {F_Get_Text('new_product.labels.age')}
-                                </label>
-                                <input
-                                    type="number"
-                                    name="age"
-                                    min={10}
-                                    max={50}
-                                    value={formData.age}
-                                    onChange={F_Handle_Change}
-                                    className="w-full px-4 py-2 rounded-lg border border-secondary/40 bg-bg-light dark:bg-bg-dark focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                />
-                            </div>
                         </div>
 
                         {/* 3. Description */}
@@ -196,7 +212,7 @@ export const F_New_Product_Page: React.FC = () => {
                             </label>
                             <textarea
                                 name="description"
-                                value={formData.description}
+                                value={form_data.description}
                                 onChange={F_Handle_Change}
                                 rows={4}
                                 placeholder={F_Get_Text('new_product.placeholders.description')}

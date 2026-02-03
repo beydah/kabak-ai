@@ -40,6 +40,9 @@ export const F_AI_Models_Section: React.FC = () => {
 
     const F_Handle_Bundle_Change = (change: number) => {
         if (change > 0) {
+            // Cap at 20 Bundles
+            if (bundle_count >= 20) return;
+
             // Add Bundle
             set_bundle_count(prev => prev + 1);
             F_Increment_Category_Usage('Text Generation', 1);
@@ -180,13 +183,14 @@ export const F_AI_Models_Section: React.FC = () => {
                                         {bundle_count}
                                     </span>
                                     <span className="text-[10px] uppercase font-bold text-secondary tracking-wider">
-                                        {bundle_count === 1 ? 'Bundle' : 'Bundles'}
+                                        {F_Get_Text('pricing.bundles_subtext')}
                                     </span>
                                 </div>
 
                                 <button
                                     onClick={() => F_Handle_Bundle_Change(1)}
-                                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95"
+                                    disabled={bundle_count >= 20}
+                                    className="w-12 h-12 flex items-center justify-center rounded-lg bg-primary text-white shadow-lg shadow-primary/30 hover:bg-primary/90 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
                                 >
                                     <Plus size={20} />
                                 </button>
@@ -243,8 +247,8 @@ export const F_AI_Models_Section: React.FC = () => {
                                                 <div
                                                     key={model.model_id}
                                                     className={`relative rounded-xl border p-4 transition-all ${isPrimary
-                                                            ? 'border-primary/30 bg-primary/5'
-                                                            : 'border-secondary/20 bg-transparent'
+                                                        ? 'border-primary/30 bg-primary/5'
+                                                        : 'border-secondary/20 bg-transparent'
                                                         }`}
                                                 >
                                                     <div className="flex justify-between items-start mb-2">

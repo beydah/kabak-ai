@@ -97,26 +97,34 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
             {/* COMPACT LAYOUT: Images Top (Side-by-Side) */}
             <div className="flex gap-4">
-                <div className="w-1/2">
-                    <p className="mb-2 text-sm font-medium text-secondary">{F_Get_Text('new_product.upload.front')}</p>
-                    <div className="aspect-square w-full">
-                        <F_File_Upload
-                            p_label={F_Get_Text('new_product.upload.front')} // Label hidden visually or inside? F_File_Upload has prompt.
-                            p_file={front_file}
-                            p_on_change={set_front_file}
-                            p_preview_url={p_initial_data?.front_image}
-                        />
+                {/* Image Upload Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    {/* Front Photo */}
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-secondary ml-1">
+                            {F_Get_Text('new_product.front_photo_label')} <span className="text-primary">*</span>
+                        </label>
+                        <div className="h-64">
+                            <F_File_Upload
+                                p_on_file_select={set_front_file}
+                                p_accept="image/png, image/jpeg, image/webp, image/tiff"
+                                p_preview_url={p_initial_data?.front_image}
+                            />
+                        </div>
                     </div>
-                </div>
-                <div className="w-1/2">
-                    <p className="mb-2 text-sm font-medium text-secondary">{F_Get_Text('new_product.upload.back')}</p>
-                    <div className="aspect-square w-full">
-                        <F_File_Upload
-                            p_label={F_Get_Text('new_product.upload.back')}
-                            p_file={back_file}
-                            p_on_change={set_back_file}
-                            p_preview_url={p_initial_data?.back_image}
-                        />
+
+                    {/* Back Photo */}
+                    <div className="space-y-3">
+                        <label className="block text-sm font-medium text-secondary ml-1">
+                            {F_Get_Text('new_product.back_photo_label')}
+                        </label>
+                        <div className="h-64">
+                            <F_File_Upload
+                                p_on_file_select={set_back_file}
+                                p_accept="image/png, image/jpeg, image/webp, image/tiff"
+                                p_preview_url={p_initial_data?.back_image}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

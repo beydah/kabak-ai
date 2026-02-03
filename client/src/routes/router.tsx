@@ -34,8 +34,4 @@ export const app_router = createBrowserRouter([
         path: '/product/:id',
         element: <F_Product_Page />,
     },
-    {
-        path: '/edit-product/:id',
-        element: <F_New_Product_Page />,
-    },
 ]);

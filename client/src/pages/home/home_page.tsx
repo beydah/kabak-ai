@@ -1,28 +1,47 @@
 import React from 'react';
-import { F_Main_Template } from '../../components/templates/main_template';
-import { F_Text } from '../../components/atoms/text';
-import { F_Button } from '../../components/atoms/button';
-import { F_Get_Text } from '../../utils/i18n_utils';
 import { useNavigate } from 'react-router-dom';
+import { F_Header } from '../../components/organisms/header';
+import { F_Footer } from '../../components/organisms/footer';
+import { F_Hero_Section } from '../../components/organisms/hero_section';
+import { F_Features_Section } from '../../components/organisms/features_section';
+import { F_About_Section } from '../../components/organisms/about_section';
+import { F_AI_Models_Section } from '../../components/organisms/ai_models_section';
+import { F_Open_Source_Section } from '../../components/organisms/open_source_section';
+import { F_Contact_Section } from '../../components/organisms/contact_section';
+import { F_Init_Theme } from '../../utils/theme_utils';
+
+// Initialize theme
+F_Init_Theme();
 
 export const F_Home_Page: React.FC = () => {
     const navigate = useNavigate();
 
+    const F_Handle_Get_Started = () => {
+        navigate('/login');
+    };
+
+    const F_Handle_Learn_More = () => {
+        const element = document.getElementById('features');
+        element?.scrollIntoView({ behavior: 'smooth' });
+    };
+
     return (
-        <F_Main_Template>
-            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-                <F_Text p_variant="h1" p_class_name="mb-4">
-                    {F_Get_Text('home.title')}
-                </F_Text>
-                <F_Text p_variant="body" p_class_name="mb-8 max-w-xl text-secondary">
-                    {F_Get_Text('home.subtitle')}
-                </F_Text>
-                <F_Button
-                    p_label={F_Get_Text('home.cta_button')}
-                    p_on_click={() => navigate('/login')}
-                    p_variant="primary"
+        <div className="min-h-screen bg-bg-light dark:bg-bg-dark transition-colors">
+            <F_Header p_is_landing={true} />
+
+            <main>
+                <F_Hero_Section
+                    p_on_cta_click={F_Handle_Get_Started}
+                    p_on_learn_more={F_Handle_Learn_More}
                 />
-            </div>
-        </F_Main_Template>
+                <F_Features_Section />
+                <F_About_Section />
+                <F_AI_Models_Section />
+                <F_Open_Source_Section />
+                <F_Contact_Section />
+            </main>
+
+            <F_Footer />
+        </div>
     );
 };

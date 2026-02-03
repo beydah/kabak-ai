@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 export default {
     content: [
-        "./index.html",
-        "./src/**/*.{js,ts,jsx,tsx}",
+        "./client/index.html",
+        "./client/src/**/*.{js,ts,jsx,tsx}",
     ],
     darkMode: 'class',
     theme: {
@@ -16,7 +16,7 @@ export default {
                 'text-dark': '#EAEFEF',
                 // Accent Colors
                 'primary': '#FF7F11',
-                'secondary': '#BFC9D1',
+                'secondary': '#94A3B8',
             },
             backgroundColor: {
                 'app': 'var(--bg-app)',

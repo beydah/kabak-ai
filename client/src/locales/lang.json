@@ -1,16 +1,126 @@
 {
     "tr": {
         "app_name": "Kabak AI",
-        "home": {
-            "title": "Kabak AI'ye Hoşgeldiniz",
-            "subtitle": "Yapay zeka destekli ürün fotoğrafçılığı",
-            "cta_button": "Başlayın"
+        "nav": {
+            "home": "Ana Sayfa",
+            "about": "Hakkımızda",
+            "ai_models": "AI Modelleri",
+            "open_source": "Açık Kaynak",
+            "contact": "İletişim",
+            "login": "Giriş",
+            "collection": "Koleksiyon",
+            "new_product": "Yeni Ürün",
+            "logout": "Çıkış"
+        },
+        "hero": {
+            "title": "AI ile Ürün Fotoğrafçılığında Devrim",
+            "subtitle": "Giyim ürünlerinizi profesyonel stüdyo kalitesinde görsellere dönüştürün. Manken seçimi, arka plan değişimi ve tanıtım videoları - hepsi yapay zeka gücüyle, saniyeler içinde.",
+            "cta_primary": "Ücretsiz Deneyin",
+            "cta_secondary": "Nasıl Çalışır?"
+        },
+        "features": {
+            "title": "AI Destekli Özellikler",
+            "subtitle": "E-ticaret işinizi büyüten, akıllı ve ölçeklenebilir araçlar",
+            "items": {
+                "mannequin": {
+                    "title": "Akıllı Manken Sistemi",
+                    "description": "Cinsiyet, yaş, vücut tipi ve ürün kesimi bazında optimize edilmiş mankenlerle ürünlerinizi sergileyin"
+                },
+                "background": {
+                    "title": "Dinamik Arka Plan Motoru",
+                    "description": "Stüdyo, kafe, şehir manzarası veya özel ortamlar - tek tıkla arka planınızı değiştirin"
+                },
+                "video": {
+                    "title": "Otomatik Video Üretimi",
+                    "description": "Ürünleriniz için profesyonel kalitede tanıtım videoları otomatik olarak oluşturun"
+                },
+                "accessories": {
+                    "title": "Akıllı Aksesuar Ekleme",
+                    "description": "Gözlük, çanta, takı ve daha fazlasını AI ile doğal bir şekilde görsellerinize entegre edin"
+                }
+            }
+        },
+        "about": {
+            "title": "Hakkımızda",
+            "subtitle": "E-ticaret için görsel üretimi yeniden tanımlıyoruz",
+            "description": "Kabak AI, moda ve giyim sektöründeki markaların stüdyo maliyetlerini %80'e kadar düşürmesini, üretim süresini 10 kat hızlandırmasını ve profesyonel kaliteyi demokratikleştirmesini sağlayan yapay zeka platformudur. Google Gemini altyapısı ile güçlendirilmiş sistemimiz, ham ürün fotoğraflarınızı satış odaklı görsellere dönüştürür.",
+            "stats": {
+                "cost_reduction": "%80 Maliyet Tasarrufu",
+                "time_saved": "10x Hızlı Üretim",
+                "quality": "Stüdyo Kalitesi"
+            }
+        },
+        "ai_models": {
+            "title": "AI Altyapısı & Fiyatlandırma",
+            "subtitle": "Modern Gemini modelleriyle güçlendirilmiş, şeffaf ve ölçeklenebilir altyapı",
+            "table": {
+                "use_case": "Kullanım Alanı",
+                "primary": "Birincil Model",
+                "fallback": "Yedek Model",
+                "cost": "Ort. Maliyet*",
+                "description": "Açıklama"
+            },
+            "items": {
+                "text": {
+                    "use_case": "Metin & SEO",
+                    "primary": "Gemini 3 Flash",
+                    "fallback": "Gemini 2.0 Flash",
+                    "cost": "~$0.01 / ürün",
+                    "description": "Ürün açıklamaları, meta tagler ve SEO optimizasyonu"
+                },
+                "image_analysis": {
+                    "use_case": "Görsel Analizi",
+                    "primary": "Gemini 3 Flash",
+                    "fallback": "Gemini 2.0 Pro",
+                    "cost": "~$0.03 / ürün",
+                    "description": "Ürün tanıma, renk/desen analizi ve kategorilendirme"
+                },
+                "image_gen": {
+                    "use_case": "Görsel Üretimi",
+                    "primary": "Gemini 3 Pro",
+                    "fallback": "Imagen 3",
+                    "cost": "~$0.15 / görsel",
+                    "description": "Yüksek çözünürlüklü manken ve arka plan üretimi"
+                },
+                "video": {
+                    "use_case": "Video Üretimi",
+                    "primary": "Veo 3",
+                    "fallback": "Veo 2",
+                    "cost": "~$0.80 / video",
+                    "description": "Sinematik ürün tanıtım videoları"
+                }
+            },
+            "pricing_note": "*Maliyetler tek bir üretim içindir ve Google Cloud API fiyatlandırmasına göre tahmin edilmiştir."
+        },
+        "open_source": {
+            "title": "Açık Kaynak & Topluluk",
+            "subtitle": "Şeffaflık ve işbirliği ile büyüyen bir platform",
+            "description": "Kabak AI, tamamen açık kaynak kodludur. Kod tabanımızı inceleyebilir, katkıda bulunabilir veya kendi sürümünüzü oluşturabilirsiniz. AI sistemlerinin şeffaf olması gerektiğine inanıyoruz.",
+            "github_button": "GitHub'da Görüntüle",
+            "license": "MIT Lisansı altında yayınlanmıştır",
+            "cta": "Kurulum veya entegrasyon konusunda yardıma mı ihtiyacınız var?",
+            "cta_button": "Destek Alın"
         },
         "contact": {
             "title": "İletişim",
+            "subtitle": "Sorularınız mı var? Bize ulaşın",
             "email_label": "E-posta",
             "phone_label": "Telefon",
-            "social_label": "Sosyal Medya"
+            "social_label": "Sosyal Medya & Bağlantılar",
+            "cta": "Projeniz için özel bir çözüme mi ihtiyacınız var?",
+            "cta_button": "İletişime Geçin",
+            "links": {
+                "github_personal": "GitHub (Kişisel)",
+                "github_brand": "GitHub (Kabak AI)",
+                "linkedin": "LinkedIn",
+                "youtube": "YouTube",
+                "website": "Web Sitesi"
+            }
+        },
+        "footer": {
+            "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır.",
+            "made_with": "Türkiye'de ❤️ ile yapıldı",
+            "creator": "Beydah Sağlam tarafından geliştirilmiştir"
         },
         "login": {
             "title": "Giriş Yap",
@@ -43,32 +153,130 @@
             "theme_light": "Açık",
             "theme_dark": "Koyu",
             "save": "Kaydet"
-        },
-        "nav": {
-            "home": "Ana Sayfa",
-            "contact": "İletişim",
-            "login": "Giriş",
-            "collection": "Koleksiyon",
-            "new_product": "Yeni Ürün",
-            "settings": "Ayarlar",
-            "logout": "Çıkış"
-        },
-        "footer": {
-            "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır."
         }
     },
     "en": {
         "app_name": "Kabak AI",
-        "home": {
-            "title": "Welcome to Kabak AI",
-            "subtitle": "AI-powered product photography",
-            "cta_button": "Get Started"
+        "nav": {
+            "home": "Home",
+            "about": "About Us",
+            "ai_models": "AI Models",
+            "open_source": "Open Source",
+            "contact": "Contact",
+            "login": "Login",
+            "collection": "Collection",
+            "new_product": "New Product",
+            "logout": "Logout"
+        },
+        "hero": {
+            "title": "Revolutionize Product Photography with AI",
+            "subtitle": "Transform your clothing products into professional studio-quality visuals. Model selection, background changes, and promotional videos - all powered by AI, in seconds.",
+            "cta_primary": "Try for Free",
+            "cta_secondary": "How It Works"
+        },
+        "features": {
+            "title": "AI-Powered Features",
+            "subtitle": "Smart, scalable tools that grow your e-commerce business",
+            "items": {
+                "mannequin": {
+                    "title": "Smart Mannequin System",
+                    "description": "Showcase your products with optimized mannequins based on gender, age, body type, and product fit"
+                },
+                "background": {
+                    "title": "Dynamic Background Engine",
+                    "description": "Studio, café, urban scenery, or custom environments - change backgrounds with one click"
+                },
+                "video": {
+                    "title": "Automated Video Production",
+                    "description": "Automatically generate professional-quality promotional videos for your products"
+                },
+                "accessories": {
+                    "title": "Smart Accessory Integration",
+                    "description": "Naturally integrate sunglasses, bags, jewelry, and more into your visuals with AI"
+                }
+            }
+        },
+        "about": {
+            "title": "About Us",
+            "subtitle": "Redefining visual production for e-commerce",
+            "description": "Kabak AI is an artificial intelligence platform that enables fashion and clothing brands to reduce studio costs by up to 80%, accelerate production time by 10x, and democratize professional quality. Powered by Google Gemini infrastructure, our system transforms raw product photos into sales-focused visuals.",
+            "stats": {
+                "cost_reduction": "80% Cost Savings",
+                "time_saved": "10x Faster Production",
+                "quality": "Studio Quality"
+            }
+        },
+        "ai_models": {
+            "title": "AI Infrastructure & Pricing",
+            "subtitle": "Transparent and scalable infrastructure powered by modern Gemini models",
+            "table": {
+                "use_case": "Use Case",
+                "primary": "Primary Model",
+                "fallback": "Fallback Model",
+                "cost": "Avg. Cost*",
+                "description": "Description"
+            },
+            "items": {
+                "text": {
+                    "use_case": "Text & SEO",
+                    "primary": "Gemini 3 Flash",
+                    "fallback": "Gemini 2.0 Flash",
+                    "cost": "~$0.01 / product",
+                    "description": "Product descriptions, meta tags, and SEO optimization"
+                },
+                "image_analysis": {
+                    "use_case": "Image Analysis",
+                    "primary": "Gemini 3 Flash",
+                    "fallback": "Gemini 2.0 Pro",
+                    "cost": "~$0.03 / product",
+                    "description": "Product recognition, color/pattern analysis"
+                },
+                "image_gen": {
+                    "use_case": "Image Generation",
+                    "primary": "Gemini 3 Pro",
+                    "fallback": "Imagen 3",
+                    "cost": "~$0.15 / image",
+                    "description": "High-fidelity mannequin and background generation"
+                },
+                "video": {
+                    "use_case": "Video Generation",
+                    "primary": "Veo 3",
+                    "fallback": "Veo 2",
+                    "cost": "~$0.80 / video",
+                    "description": "Cinematic product promotional videos"
+                }
+            },
+            "pricing_note": "*Costs are per single generation and estimated based on Google Cloud API pricing."
+        },
+        "open_source": {
+            "title": "Open Source & Community",
+            "subtitle": "A platform growing through transparency and collaboration",
+            "description": "Kabak AI is fully open source. You can review our codebase, contribute, or build your own version. We believe AI systems should be transparent.",
+            "github_button": "View on GitHub",
+            "license": "Released under MIT License",
+            "cta": "Need help with installation or integration?",
+            "cta_button": "Get Support"
         },
         "contact": {
             "title": "Contact",
+            "subtitle": "Have questions? Get in touch",
             "email_label": "Email",
             "phone_label": "Phone",
-            "social_label": "Social Media"
+            "social_label": "Social Media & Links",
+            "cta": "Need a custom solution for your project?",
+            "cta_button": "Contact Us",
+            "links": {
+                "github_personal": "GitHub (Personal)",
+                "github_brand": "GitHub (Kabak AI)",
+                "linkedin": "LinkedIn",
+                "youtube": "YouTube",
+                "website": "Website"
+            }
+        },
+        "footer": {
+            "copyright": "© 2026 Kabak AI. All rights reserved.",
+            "made_with": "Made with ❤️ in Turkey",
+            "creator": "Developed by Beydah Sağlam"
         },
         "login": {
             "title": "Login",
@@ -101,18 +309,6 @@
             "theme_light": "Light",
             "theme_dark": "Dark",
             "save": "Save"
-        },
-        "nav": {
-            "home": "Home",
-            "contact": "Contact",
-            "login": "Login",
-            "collection": "Collection",
-            "new_product": "New Product",
-            "settings": "Settings",
-            "logout": "Logout"
-        },
-        "footer": {
-            "copyright": "© 2026 Kabak AI. All rights reserved."
         }
     }
 }

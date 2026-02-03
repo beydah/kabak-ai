@@ -12,48 +12,54 @@
   --text-app: #EAEFEF;
 }
 
-body {
-  @apply bg-bg-light text-text-light transition-colors duration-300;
+@layer base {
+  body {
+    @apply bg-bg-light text-text-light transition-colors duration-300;
+  }
+
+  /* HTML Smooth Scroll */
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 80px;
+  }
 }
 
-.dark body {
-  @apply bg-bg-dark text-text-dark;
-}
+@layer components {
 
-/* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+  /* Simple dark mode override for body if needed outside base layer, 
+     but usually handled by body class in base. 
+     Keeping it separate if specificity is tricky, 
+     but standard tailwind handles dark: correctly. 
+     Let's rely on standard dark mode classes on body. 
+  */
+  .dark body {
+    @apply bg-bg-dark text-text-dark;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  /* Button Base */
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
+  }
 
-/* Button Base */
-.btn {
-  @apply px-4 py-2 rounded-lg font-medium transition-all duration-200;
-}
+  .btn-primary {
+    @apply bg-primary text-white hover:opacity-90;
+  }
 
-.btn-primary {
-  @apply bg-primary text-white hover:opacity-90;
-}
+  .btn-secondary {
+    @apply bg-secondary text-text-light hover:opacity-90;
+  }
 
-.btn-secondary {
-  @apply bg-secondary text-text-light hover:opacity-90;
-}
+  /* Input Base */
+  .input {
+    @apply px-4 py-2 rounded-lg border border-secondary focus:outline-none focus:ring-2 focus:ring-primary;
+  }
 
-/* Input Base */
-.input {
-  @apply px-4 py-2 rounded-lg border border-secondary focus:outline-none focus:ring-2 focus:ring-primary;
-}
+  .dark .input {
+    @apply bg-bg-dark text-text-dark border-secondary;
+  }
 
-.dark .input {
-  @apply bg-bg-dark text-text-dark border-secondary;
-}
-
-/* Link Base */
-.link {
-  @apply text-primary hover:underline transition-colors;
+  /* Link Base */
+  .link {
+    @apply text-primary hover:underline transition-colors;
+  }
 }

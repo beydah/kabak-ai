@@ -7,10 +7,9 @@ import { F_Login_Page } from '../pages/login/login_page';
 import { F_Collection_Page } from '../pages/collection/collection_page';
 import { F_New_Product_Page } from '../pages/new_product/new_product_page';
 import { F_Product_Page } from '../pages/product/product_page';
-import { F_Settings_Page } from '../pages/settings/settings_page';
+// Settings removed
 
 export const app_router = createBrowserRouter([
-    // Brand / Marketing Pages
     {
         path: '/',
         element: <F_Home_Page />,
@@ -19,8 +18,6 @@ export const app_router = createBrowserRouter([
         path: '/contact',
         element: <F_Contact_Page />,
     },
-
-    // Application Pages
     {
         path: '/login',
         element: <F_Login_Page />,
@@ -34,15 +31,7 @@ export const app_router = createBrowserRouter([
         element: <F_New_Product_Page />,
     },
     {
-        path: '/product',
-        element: <F_Product_Page />,
-    },
-    {
         path: '/product/:id',
         element: <F_Product_Page />,
-    },
-    {
-        path: '/settings',
-        element: <F_Settings_Page />,
     },
 ]);

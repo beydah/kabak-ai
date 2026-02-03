@@ -6,11 +6,14 @@ interface File_Upload_Props {
     p_label: string;
     p_file: File | null;
     p_on_change: (file: File | null) => void;
+    p_preview_url?: string;
 }
 
-export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_on_change }) => {
+export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_on_change, p_preview_url }) => {
     const [is_dragging, set_is_dragging] = useState(false);
     const input_ref = useRef<HTMLInputElement>(null);
+
+    const active_preview = p_file ? URL.createObjectURL(p_file) : p_preview_url;
 
     const F_Handle_Drag_Over = (e: React.DragEvent) => {
         e.preventDefault();
@@ -75,10 +78,10 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
                     onChange={F_Handle_Input_Change}
                 />
 
-                {p_file ? (
+                {active_preview ? (
                     <div className="relative w-full h-full group">
                         <img
-                            src={URL.createObjectURL(p_file)}
+                            src={active_preview}
                             alt="Preview"
                             className="w-full h-full object-cover rounded-lg"
                         />

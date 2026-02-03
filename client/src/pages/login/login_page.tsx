@@ -13,6 +13,31 @@ export const F_Login_Page: React.FC = () => {
     const [error_message, set_error_message] = React.useState('');
     const [lockout_timer, set_lockout_timer] = React.useState(0);
 
+    const F_Check_Ban_Status = () => {
+        const ban_status = localStorage.getItem('login_ban_status');
+        const ban_timestamp = localStorage.getItem('login_ban_timestamp');
+
+        if (ban_status === 'active' && ban_timestamp) {
+            const remaining_ms = parseInt(ban_timestamp) - Date.now();
+            if (remaining_ms > 0) {
+                set_lockout_timer(Math.ceil(remaining_ms / 1000));
+                set_error_message(F_Get_Text('login.account_locked'));
+                return true;
+            } else {
+                F_Clear_Ban();
+            }
+        }
+        return false;
+    };
+
+    const F_Clear_Ban = () => {
+        localStorage.removeItem('login_ban_status');
+        localStorage.removeItem('login_ban_timestamp');
+        localStorage.setItem('login_attempts', '0');
+        set_lockout_timer(0);
+        set_error_message('');
+    };
+
     useEffect(() => {
         // Check for auth cookie
         const auth_token = document.cookie.split('; ').find(row => row.startsWith('auth_token='));
@@ -20,17 +45,9 @@ export const F_Login_Page: React.FC = () => {
             navigate('/collection');
         }
 
-        // Check lockout status
-        const lockout_until = localStorage.getItem('login_lockout_until');
-        if (lockout_until) {
-            const remaining = Math.ceil((parseInt(lockout_until) - Date.now()) / 1000);
-            if (remaining > 0) {
-                set_lockout_timer(remaining);
-            } else {
-                localStorage.removeItem('login_lockout_until');
-                localStorage.setItem('login_attempts', '0');
-            }
-        }
+        // Check ban status on load
+        F_Check_Ban_Status();
+
     }, [navigate]);
 
     // Timer Countdown
@@ -39,8 +56,7 @@ export const F_Login_Page: React.FC = () => {
             const timer = setInterval(() => {
                 set_lockout_timer(prev => {
                     if (prev <= 1) {
-                        localStorage.removeItem('login_lockout_until');
-                        localStorage.setItem('login_attempts', '0');
+                        F_Clear_Ban();
                         return 0;
                     }
                     return prev - 1;
@@ -53,6 +69,9 @@ export const F_Login_Page: React.FC = () => {
     const F_Handle_Login = () => {
         if (lockout_timer > 0) return;
 
+        // Re-check ban status before attempting (in case of tampering)
+        if (F_Check_Ban_Status()) return;
+
         const env_username = import.meta.env.VITE_USERNAME;
         const env_password = import.meta.env.VITE_PASSWORD;
 
@@ -62,25 +81,30 @@ export const F_Login_Page: React.FC = () => {
             date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
             document.cookie = "auth_token=session_key; expires=" + date.toUTCString() + "; path=/";
 
-            // Reset attempts
-            localStorage.setItem('login_attempts', '0');
-            localStorage.removeItem('login_lockout_until');
-
+            F_Clear_Ban();
             navigate('/collection');
         } else {
             // Failure
-            set_error_message(F_Get_Text('login.invalid_credentials') || 'Invalid credentials');
+            set_error_message(F_Get_Text('login.invalid_credentials'));
 
             const current_attempts = parseInt(localStorage.getItem('login_attempts') || '0') + 1;
             localStorage.setItem('login_attempts', current_attempts.toString());
 
             if (current_attempts >= 5) {
-                const lockout_end = Date.now() + (5 * 60 * 1000); // 5 minutes
-                localStorage.setItem('login_lockout_until', lockout_end.toString());
+                const ban_end_time = Date.now() + (5 * 60 * 1000); // 5 minutes from now
+                localStorage.setItem('login_ban_status', 'active');
+                localStorage.setItem('login_ban_timestamp', ban_end_time.toString());
+
                 set_lockout_timer(300);
-                set_error_message("Too many failed attempts. Try again in 5 minutes.");
+                set_error_message(F_Get_Text('login.account_locked'));
             }
         }
+    };
+
+    const F_Format_Time = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
     return (
@@ -109,21 +133,21 @@ export const F_Login_Page: React.FC = () => {
 
                 {lockout_timer > 0 && (
                     <div className="bg-orange-500/10 text-orange-500 p-3 rounded-lg text-sm text-center border border-orange-500/20 font-mono">
-                        Locked out: {Math.floor(lockout_timer / 60)}:{(lockout_timer % 60).toString().padStart(2, '0')}
+                        {F_Get_Text('login.try_again_after')} {F_Format_Time(lockout_timer)}
                     </div>
                 )}
 
                 <div className="flex flex-col gap-4">
                     <F_Input
                         p_value={username}
-                        p_on_change={(e) => set_username(e.target.value)}
+                        p_on_change={set_username} // Fixed: Direct state setter
                         p_placeholder={F_Get_Text('login.username_placeholder')}
                         p_type="text"
                         p_disabled={lockout_timer > 0}
                     />
                     <F_Input
                         p_value={password}
-                        p_on_change={(e) => set_password(e.target.value)}
+                        p_on_change={set_password} // Fixed: Direct state setter
                         p_placeholder={F_Get_Text('login.password_placeholder')}
                         p_type="password"
                         p_disabled={lockout_timer > 0}
@@ -131,12 +155,25 @@ export const F_Login_Page: React.FC = () => {
                 </div>
 
                 <F_Button
-                    p_label={lockout_timer > 0 ? `Wait ${lockout_timer}s` : F_Get_Text('login.submit_button')}
+                    p_label={lockout_timer > 0 ? F_Format_Time(lockout_timer) : F_Get_Text('login.submit_button')}
                     p_on_click={F_Handle_Login}
                     p_variant="primary"
                     p_class_name="w-full"
                     p_disabled={lockout_timer > 0}
                 />
+
+                {/* Footer CTA */}
+                <div className="text-center text-sm text-secondary mt-2">
+                    {F_Get_Text('login.contact_prompt')}{' '}
+                    <a
+                        href="https://beydahsaglam.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-bold text-primary hover:underline hover:text-primary/80 transition-colors"
+                    >
+                        {F_Get_Text('login.contact_link')}
+                    </a>.
+                </div>
             </div>
         </F_Auth_Template>
     );

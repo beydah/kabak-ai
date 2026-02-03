@@ -126,7 +126,12 @@
             "title": "Giriş Yap",
             "username_placeholder": "Kullanıcı adı",
             "password_placeholder": "Şifre",
-            "submit_button": "Giriş"
+            "submit_button": "Giriş",
+            "invalid_credentials": "Kullanıcı adı veya şifre hatalı.",
+            "account_locked": "Hesabınız geçici olarak kilitlendi.",
+            "try_again_after": "Tekrar denemek için kalan süre:",
+            "contact_prompt": "Eğer kullanıcı olmak istiyorsanız lütfen",
+            "contact_link": "iletişime geçin"
         },
         "collection": {
             "title": "Koleksiyonlarım",
@@ -350,7 +355,12 @@
             "title": "Login",
             "username_placeholder": "Username",
             "password_placeholder": "Password",
-            "submit_button": "Login"
+            "submit_button": "Login",
+            "invalid_credentials": "Invalid username or password.",
+            "account_locked": "Your account is temporarily locked.",
+            "try_again_after": "You can try again after:",
+            "contact_prompt": "If you want to become a user, please",
+            "contact_link": "contact us"
         },
         "collection": {
             "title": "My Collections",

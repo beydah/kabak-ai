@@ -1,0 +1,118 @@
+{
+    "tr": {
+        "app_name": "Kabak AI",
+        "home": {
+            "title": "Kabak AI'ye Hoşgeldiniz",
+            "subtitle": "Yapay zeka destekli ürün fotoğrafçılığı",
+            "cta_button": "Başlayın"
+        },
+        "contact": {
+            "title": "İletişim",
+            "email_label": "E-posta",
+            "phone_label": "Telefon",
+            "social_label": "Sosyal Medya"
+        },
+        "login": {
+            "title": "Giriş Yap",
+            "username_placeholder": "Kullanıcı adı",
+            "password_placeholder": "Şifre",
+            "submit_button": "Giriş",
+            "forgot_password": "Şifremi Unuttum"
+        },
+        "collection": {
+            "title": "Koleksiyonlarım",
+            "empty_state": "Henüz koleksiyon yok",
+            "create_new": "Yeni Koleksiyon"
+        },
+        "new_product": {
+            "title": "Yeni Ürün Ekle",
+            "product_name": "Ürün Adı",
+            "upload_image": "Görsel Yükle",
+            "generate_button": "Oluştur"
+        },
+        "product": {
+            "title": "Ürün Detayı",
+            "download": "İndir",
+            "edit": "Düzenle",
+            "delete": "Sil"
+        },
+        "settings": {
+            "title": "Ayarlar",
+            "language": "Dil",
+            "theme": "Tema",
+            "theme_light": "Açık",
+            "theme_dark": "Koyu",
+            "save": "Kaydet"
+        },
+        "nav": {
+            "home": "Ana Sayfa",
+            "contact": "İletişim",
+            "login": "Giriş",
+            "collection": "Koleksiyon",
+            "new_product": "Yeni Ürün",
+            "settings": "Ayarlar",
+            "logout": "Çıkış"
+        },
+        "footer": {
+            "copyright": "© 2026 Kabak AI. Tüm hakları saklıdır."
+        }
+    },
+    "en": {
+        "app_name": "Kabak AI",
+        "home": {
+            "title": "Welcome to Kabak AI",
+            "subtitle": "AI-powered product photography",
+            "cta_button": "Get Started"
+        },
+        "contact": {
+            "title": "Contact",
+            "email_label": "Email",
+            "phone_label": "Phone",
+            "social_label": "Social Media"
+        },
+        "login": {
+            "title": "Login",
+            "username_placeholder": "Username",
+            "password_placeholder": "Password",
+            "submit_button": "Login",
+            "forgot_password": "Forgot Password"
+        },
+        "collection": {
+            "title": "My Collections",
+            "empty_state": "No collections yet",
+            "create_new": "New Collection"
+        },
+        "new_product": {
+            "title": "Add New Product",
+            "product_name": "Product Name",
+            "upload_image": "Upload Image",
+            "generate_button": "Generate"
+        },
+        "product": {
+            "title": "Product Detail",
+            "download": "Download",
+            "edit": "Edit",
+            "delete": "Delete"
+        },
+        "settings": {
+            "title": "Settings",
+            "language": "Language",
+            "theme": "Theme",
+            "theme_light": "Light",
+            "theme_dark": "Dark",
+            "save": "Save"
+        },
+        "nav": {
+            "home": "Home",
+            "contact": "Contact",
+            "login": "Login",
+            "collection": "Collection",
+            "new_product": "New Product",
+            "settings": "Settings",
+            "logout": "Logout"
+        },
+        "footer": {
+            "copyright": "© 2026 Kabak AI. All rights reserved."
+        }
+    }
+}

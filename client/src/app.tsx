@@ -1,13 +1,13 @@
 import React from 'react';
+import { RouterProvider } from 'react-router-dom';
+import { app_router } from './routes/router';
+import { F_Init_Theme } from './utils/theme_utils';
+
+// Initialize theme on app load
+F_Init_Theme();
 
 function App() {
-    return (
-        <div className="flex h-screen w-full items-center justify-center bg-gray-100">
-            <h1 className="text-4xl font-bold text-blue-600">
-                Kabak AI - Strict Architecture
-            </h1>
-        </div>
-    );
+    return <RouterProvider router={app_router} />;
 }
 
 export default App;

@@ -12,7 +12,7 @@ export default {
                 'bg-light': '#EAEFEF',
                 'text-light': '#25343F',
                 // Dark Mode
-                'bg-dark': '#020617', // Rich Parliament Blue/Black
+                'bg-dark': '#0A0A0A', // True Black
                 'text-dark': '#EAEFEF',
                 // Accent Colors
                 'primary': '#FF7F11',

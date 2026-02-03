@@ -1,0 +1,52 @@
+{
+    "models": [
+        {
+            "model_id": "gemini-3-pro",
+            "category": "Text Generation",
+            "daily_limit_rpd": 250,
+            "minute_limit_rpm": 25,
+            "current_usage_today": 0,
+            "is_primary": true
+        },
+        {
+            "model_id": "gemini-3-flash",
+            "category": "Text Generation",
+            "daily_limit_rpd": 10000,
+            "minute_limit_rpm": 1000,
+            "current_usage_today": 0,
+            "is_primary": false
+        },
+        {
+            "model_id": "imagen-4.0-fast-generate",
+            "category": "Image",
+            "daily_limit_rpd": 70,
+            "minute_limit_rpm": 10,
+            "current_usage_today": 0,
+            "is_primary": true
+        },
+        {
+            "model_id": "imagen-4.0-generate",
+            "category": "Image",
+            "daily_limit_rpd": 70,
+            "minute_limit_rpm": 10,
+            "current_usage_today": 0,
+            "is_primary": false
+        },
+        {
+            "model_id": "veo-3.0-fast-generate",
+            "category": "Video",
+            "daily_limit_rpd": 10,
+            "minute_limit_rpm": 2,
+            "current_usage_today": 0,
+            "is_primary": true
+        },
+        {
+            "model_id": "veo-3.0-generate",
+            "category": "Video",
+            "daily_limit_rpd": 10,
+            "minute_limit_rpm": 2,
+            "current_usage_today": 0,
+            "is_primary": false
+        }
+    ]
+}

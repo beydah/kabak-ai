@@ -17,7 +17,7 @@ export const F_Home_Page: React.FC = () => {
     const navigate = useNavigate();
 
     const F_Handle_Get_Started = () => {
-        navigate('/login');
+        window.open('https://beydahsaglam.com', '_blank');
     };
 
     const F_Handle_Learn_More = () => {

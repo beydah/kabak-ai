@@ -72,10 +72,29 @@ export const F_Login_Page: React.FC = () => {
         // Re-check ban status before attempting (in case of tampering)
         if (F_Check_Ban_Status()) return;
 
-        const env_username = import.meta.env.VITE_USERNAME;
-        const env_password = import.meta.env.VITE_PASSWORD;
+        const env_username = (import.meta.env.VITE_USERNAME || '').trim();
+        const env_password = (import.meta.env.VITE_PASSWORD || '').trim();
 
-        if (username === env_username && password === env_password) {
+        const input_username = username.trim();
+        const input_password = password.trim();
+
+        // TEMPORARY DEBUG LOGGING (Compare sanitized values)
+        console.log('[Auth Debug]', {
+            status: 'Checking credentials',
+            match_user: input_username === env_username,
+            match_pass: input_password === env_password,
+            env_user_len: env_username.length,
+            env_pass_len: env_password.length,
+            env_user_loaded: !!import.meta.env.VITE_USERNAME,
+            env_pass_loaded: !!import.meta.env.VITE_PASSWORD
+        });
+
+        if (!env_username || !env_password) {
+            set_error_message("System Error: Auth configuration missing. Check .env file.");
+            return;
+        }
+
+        if (input_username === env_username && input_password === env_password) {
             // Success
             const date = new Date();
             date.setTime(date.getTime() + (7 * 24 * 60 * 60 * 1000)); // 7 days
@@ -87,8 +106,11 @@ export const F_Login_Page: React.FC = () => {
             // Failure
             set_error_message(F_Get_Text('login.invalid_credentials'));
 
+            // Only increment attempts ON FAILURE
             const current_attempts = parseInt(localStorage.getItem('login_attempts') || '0') + 1;
             localStorage.setItem('login_attempts', current_attempts.toString());
+
+            console.log('[Auth Debug] Failed. Attempts:', current_attempts);
 
             if (current_attempts >= 5) {
                 const ban_end_time = Date.now() + (5 * 60 * 1000); // 5 minutes from now
@@ -96,7 +118,7 @@ export const F_Login_Page: React.FC = () => {
                 localStorage.setItem('login_ban_timestamp', ban_end_time.toString());
 
                 set_lockout_timer(300);
-                set_error_message(F_Get_Text('login.account_locked'));
+                set_error_message("Too many failed attempts. Access restricted for 5 minutes.");
             }
         }
     };

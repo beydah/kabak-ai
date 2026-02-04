@@ -265,13 +265,16 @@ const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navigate, p
                     <img
                         src={display_image}
                         alt={current_view}
-                        className={`w-full h-full object-cover transition-transform duration-500 ${(is_running || is_exited) ? 'blur-sm grayscale' : ''}`}
+                        className={`w-full h-full object-cover transition-transform duration-500 ${(is_running) ? 'scale-105 animate-breathe opacity-90 blur-[2px]' : ''} ${(is_exited) ? 'blur-sm grayscale' : ''}`}
                     />
 
-                    {/* RUNNING STATE */}
+                    {/* RUNNING STATE - Shimmer Animation */}
                     {is_running && (
-                        <div className="absolute inset-0 flex items-center justify-center z-20 bg-black/10">
-                            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        <div className="absolute inset-0 z-20 pointer-events-none">
+                            {/* Shimmer Overlay */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-x-full animate-shimmer" />
+                            {/* Pulse Overlay */}
+                            <div className="absolute inset-0 bg-orange-500/10 animate-pulse" />
                         </div>
                     )}
 
@@ -328,11 +331,7 @@ const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navigate, p
 
                 {/* Content */}
                 <div className="p-4 relative">
-                    {is_running && (
-                        <div className="absolute inset-0 bg-white/50 dark:bg-black/50 backdrop-blur-[1px] z-10 flex items-center justify-center p-4 text-center">
-                            <span className="text-xs font-bold text-primary animate-pulse">Generating Content...</span>
-                        </div>
-                    )}
+
 
 
                     <p className="font-medium text-text-light dark:text-text-dark truncate">

@@ -27,11 +27,11 @@ export const F_Modal: React.FC<Modal_Props> = ({ p_is_open, p_on_close, p_title,
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
             <div
-                className="bg-white dark:bg-[#1E293B] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col relative animate-fade-in-up"
+                className="bg-white dark:bg-[#0A0A0A] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col relative animate-fade-in-up"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
-                <div className="flex items-center justify-between p-6 border-b border-secondary/10 sticky top-0 bg-white dark:bg-[#1E293B] z-10">
+                <div className="flex items-center justify-between p-6 border-b border-secondary/10 sticky top-0 bg-white dark:bg-[#0A0A0A] z-10">
                     <h2 className="text-xl font-bold text-text-light dark:text-text-dark">
                         {p_title}
                     </h2>

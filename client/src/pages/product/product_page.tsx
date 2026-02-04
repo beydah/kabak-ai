@@ -113,9 +113,10 @@ export const F_Product_Page: React.FC = () => {
                         {/* Main Image Container */}
                         <div className="aspect-[3/4] bg-white dark:bg-bg-dark rounded-xl shadow-sm border border-secondary/20 overflow-hidden relative group">
                             <img
+                                key={active_image} // Force re-render for animation
                                 src={current_image_src}
                                 alt="Main View"
-                                className="w-full h-full object-cover transition-transform duration-500"
+                                className="w-full h-full object-cover animate-fade-in"
                             />
 
                             {/* Navigation Arrows (Only if multiple images) */}

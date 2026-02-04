@@ -35,7 +35,14 @@ export const F_Save_Product = (p_product: I_Product_Data) => {
     } else {
         products.unshift(p_product); // Add to beginning
     }
-    localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
+    try {
+        localStorage.setItem(STORAGE_KEY_PRODUCTS, JSON.stringify(products));
+    } catch (e: any) {
+        if (e.name === 'QuotaExceededError') {
+            alert("Storage Limit Reached. Please delete some old products to create new ones.");
+            throw e; // Bubble up so UI knows it failed
+        }
+    }
 };
 
 export const F_Get_All_Products = (): I_Product_Data[] => {

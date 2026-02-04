@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { F_Theme_Toggle } from '../molecules/theme_toggle';
 import { F_Get_Text, F_Get_Language, F_Set_Language } from '../../utils/i18n_utils';
+import { F_Transition_Theme } from '../../utils/theme_utils';
 import { Menu, X, LogOut, Globe, Moon, Sun } from 'lucide-react';
 
 interface Header_Props {
@@ -71,6 +72,23 @@ export const F_Header: React.FC<Header_Props> = ({
 
     const logo_target = p_is_authenticated ? '/collection' : '/';
 
+    const menu_ref = React.useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        const F_Handle_Click_Outside = (event: MouseEvent) => {
+            if (menu_ref.current && !menu_ref.current.contains(event.target as Node)) {
+                set_is_menu_open(false);
+            }
+        };
+
+        if (is_menu_open) {
+            document.addEventListener('mousedown', F_Handle_Click_Outside);
+        }
+        return () => {
+            document.removeEventListener('mousedown', F_Handle_Click_Outside);
+        };
+    }, [is_menu_open]);
+
     return (
         <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${is_scrolled || p_is_authenticated
             ? 'bg-bg-light/90 dark:bg-bg-dark/90 backdrop-blur-md shadow-md'
@@ -128,7 +146,7 @@ export const F_Header: React.FC<Header_Props> = ({
                     {/* On Desktop: Shows dropdown with Language, Theme, Logout */}
                     {/* On Mobile: Shows everything */}
 
-                    <div className="relative group">
+                    <div className="relative group" ref={menu_ref}>
                         <button
                             onClick={() => set_is_menu_open(!is_menu_open)}
                             className="p-2 rounded-lg hover:bg-secondary/10 text-text-light dark:text-text-dark transition-colors"
@@ -138,7 +156,7 @@ export const F_Header: React.FC<Header_Props> = ({
 
                         {/* Dropdown / Mobile Menu Overlay */}
                         {is_menu_open && (
-                            <div className="absolute right-0 top-full mt-2 w-64 bg-bg-light dark:bg-bg-dark rounded-xl shadow-xl border border-secondary/20 p-4 flex flex-col gap-2 animate-in fade-in slide-in-from-top-2">
+                            <div className="absolute right-0 top-full mt-2 w-64 bg-bg-light/95 dark:bg-bg-dark/95 backdrop-blur-xl rounded-xl shadow-xl border border-secondary/20 p-4 flex flex-col gap-2 animate-in fade-in slide-in-from-top-2">
 
                                 {/* Mobile-Only Links (Duplicate of main nav for small screens) */}
                                 <div className="md:hidden flex flex-col gap-1 border-b border-secondary/10 pb-2 mb-2">
@@ -187,11 +205,22 @@ export const F_Header: React.FC<Header_Props> = ({
                                 </button>
 
                                 {/* Theme (Custom Toggle Logic since we are inside a button/menu item) */}
-                                <div className="flex items-center justify-between px-3 py-2 hover:bg-secondary/10 rounded-lg transition-colors">
+                                <div
+                                    onClick={(e) => F_Transition_Theme(e)}
+                                    className="flex items-center justify-between px-3 py-2 hover:bg-secondary/10 rounded-lg transition-colors cursor-pointer"
+                                >
                                     <div className="flex items-center gap-3 text-sm font-medium text-text-light dark:text-text-dark">
                                         <Moon size={18} />
                                         <span>{F_Get_Text('settings.theme')}</span>
                                     </div>
+                                    {/* Pass a dummy class or pointer-events-none if we want checking parent click only? 
+                                            Actually, if we click the button inside, e.stopPropagation might be needed if we don't want double trigger.
+                                            But F_Theme_Toggle also calls F_Transition_Theme. 
+                                            If we click the button, it bubbles to this div? 
+                                            Yes. So we get double trigger. 
+                                            We should stop propagation in F_Theme_Toggle or just rely on this div. 
+                                            Better: make F_Theme_Toggle click handle stopPropagation. 
+                                         */}
                                     <F_Theme_Toggle />
                                 </div>
 

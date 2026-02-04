@@ -31,6 +31,7 @@ export const F_Get_Theme = (): Theme_Type => {
 export const F_Set_Theme = (p_theme: Theme_Type): void => {
     F_Set_Preference('theme', p_theme);
     F_Apply_Theme(p_theme);
+    window.dispatchEvent(new Event('theme-change'));
 };
 
 /**
@@ -50,11 +51,98 @@ export const F_Apply_Theme = (p_theme: Theme_Type): void => {
 /**
  * Toggle between light and dark theme
  */
+/**
+ * Toggle between light and dark theme
+ */
 export const F_Toggle_Theme = (): Theme_Type => {
     const current = F_Get_Theme();
     const new_theme: Theme_Type = current === 'light' ? 'dark' : 'light';
     F_Set_Theme(new_theme);
     return new_theme;
+};
+
+/**
+ * Advanced Circular Reveal Transition
+ */
+export const F_Transition_Theme = (e: React.MouseEvent, p_on_complete?: () => void) => {
+    const x = e.clientX;
+    const y = e.clientY;
+
+    const current_theme = F_Get_Theme();
+    const next_theme = current_theme === 'light' ? 'dark' : 'light';
+
+    // Create overlay element
+    const circle = document.createElement('div');
+    circle.style.position = 'fixed';
+    circle.style.left = `${x}px`;
+    circle.style.top = `${y}px`;
+    circle.style.width = '0px';
+    circle.style.height = '0px';
+    circle.style.borderRadius = '50%';
+    circle.style.transform = 'translate(-50%, -50%)';
+
+    // Correct Colors from Index.css + Text Overlay
+    // Dark Target: #25343F
+    // Light Target: #EAEFEF
+    circle.style.backgroundColor = next_theme === 'dark' ? '#25343F' : '#EAEFEF';
+    circle.style.zIndex = '9999';
+    circle.style.pointerEvents = 'none';
+    circle.style.display = 'flex';
+    circle.style.alignItems = 'center';
+    circle.style.justifyContent = 'center';
+    circle.style.overflow = 'hidden'; // Clip the text
+    circle.style.transition = 'width 1s ease-in-out, height 1s ease-in-out';
+
+    // Branding Text
+    const text = document.createElement('span');
+    text.innerText = 'Kabak AI';
+    text.style.fontFamily = 'Inter, sans-serif'; // Ensure font matches
+    text.style.fontSize = '2rem';
+    text.style.fontWeight = 'bold';
+    text.style.color = next_theme === 'dark' ? '#EAEFEF' : '#25343F'; // Contrast color
+    text.style.opacity = '0';
+    text.style.transition = 'opacity 0.4s ease-in-out';
+    text.style.whiteSpace = 'nowrap';
+
+    circle.appendChild(text);
+    document.body.appendChild(circle);
+
+    // Force reflow
+    circle.getBoundingClientRect();
+
+    // Calculate required size to cover screen
+    const max_dim = Math.max(window.innerWidth, window.innerHeight);
+    const size = max_dim * 2.5;
+
+    requestAnimationFrame(() => {
+        circle.style.width = `${size}px`;
+        circle.style.height = `${size}px`;
+        // Fade in text halfway through
+        setTimeout(() => {
+            text.style.opacity = '1';
+        }, 300);
+    });
+
+    // Wait for animation to cover screen
+    setTimeout(() => {
+        F_Set_Theme(next_theme);
+        if (p_on_complete) p_on_complete();
+
+        // Fade out branding text first
+        text.style.opacity = '0';
+
+        setTimeout(() => {
+            circle.style.opacity = '0';
+            circle.style.transition = 'opacity 0.4s ease-out';
+
+            setTimeout(() => {
+                if (document.body.contains(circle)) {
+                    document.body.removeChild(circle);
+                }
+            }, 400);
+        }, 200); // Short delay to let users see the logo
+
+    }, 1000); // Sync with transition duration
 };
 
 /**

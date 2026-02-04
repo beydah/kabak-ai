@@ -7,6 +7,7 @@
             "ai_models": "AI Modelleri",
             "open_source": "Açık Kaynak",
             "contact": "İletişim",
+            "contact_email": "info.beydahsaglam@gmail.com",
             "login": "Giriş",
             "collection": "Koleksiyon",
             "new_product": "Yeni Ürün",
@@ -144,7 +145,15 @@
             "upload": {
                 "front": "Ön Fotoğraf",
                 "back": "Arka Fotoğraf",
-                "select_file": "Dosya Seçin"
+                "select_file": "Dosya Seçin",
+                "click_to_upload": "Yüklemek için Tıklayın veya Sürükleyin",
+                "change_photo": "Fotoğrafı Değiştir",
+                "file_format": "JPG, PNG, WEBP, SVG",
+                "error_type": "Geçersiz dosya tipi."
+            },
+            "validation": {
+                "required_all": "Lütfen tüm alanları doldurun.",
+                "required_images": "Lütfen hem ön hem arka fotoğrafı yükleyin."
             },
             "labels": {
                 "gender": "Cinsiyet",
@@ -236,6 +245,7 @@
             "ai_models": "AI Models",
             "open_source": "Open Source",
             "contact": "Contact",
+            "contact_email": "info.beydahsaglam@gmail.com",
             "login": "Login",
             "collection": "Collection",
             "new_product": "New Product",
@@ -373,7 +383,15 @@
             "upload": {
                 "front": "Front Photo",
                 "back": "Back Photo",
-                "select_file": "Select File"
+                "select_file": "Select File",
+                "click_to_upload": "Click or Drag to Upload",
+                "change_photo": "Change Photo",
+                "file_format": "JPG, PNG, WEBP, SVG",
+                "error_type": "Invalid file type."
+            },
+            "validation": {
+                "required_all": "Please fill in all fields.",
+                "required_images": "Please upload both front and back photos."
             },
             "labels": {
                 "gender": "Gender",

@@ -63,68 +63,57 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     const F_Handle_Submit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Use existing ID if edit mode, or generate new one ONLY if we have files to name (but we need ID for naming)
-        // If it's new product, we need to generate ID here to name files? 
-        // Or we pass files to parent and parent handles standard. 
-        // The requirement says "standard naming convention must be applied to raw product images uploaded".
-        // Let's generate a temporary ID for naming if not present?
-        // Actually best to let the parent or a utility handle the naming, but we can do it here before passing up.
-        // We don't know the final ID in New Product mode until creation... 
-        // Wait, NewProductPage generates uuidv4(). 
-        // To strictly follow the specific naming convention `front_raw_<product-id>`, 
-        // the ID must be known at the time of file processing.
-        // The current strict separation requires the parent to pass the ID or us to generate it.
-        // Let's rename them here if we can, but we don't have the new ID in props if it's new.
-        // We will pass the original files, and let the Parent handle renaming logic? 
-        // NO, the requirement is strong. Let's rename here. We need the ID.
-        // Let's assume the parent generates the ID for new products too? 
-        // Or we generate it here? 
-        // Better: We rename the file object before passing to p_on_submit?
-        // But we don't have the ID. 
-        // Let's look at `NewProductPage` implementation. It calls `uuidv4()` inside submit.
-        // I should probably move ID generation to `NewProductPage` state or pass it down?
-        // OR simpler: `p_on_submit` will handle the renaming logic. 
-        // I will implement the renaming utility in `file_utils` or strictly inside the submit handler of the Parent Page.
-        // BUT `ProductForm` is what I am editing now.
-        // The requirement says "popup grid structure must be rebalanced". 
-        // I will focus on visual layout here. I will handle naming in the Parent updates or ensure `p_on_submit` does it.
+        // Validation
+        if (!front_file && !p_initial_data?.front_image) {
+            alert(F_Get_Text('validation.required_images'));
+            return;
+        }
+
+        if (!back_file && !p_initial_data?.back_image) {
+            alert(F_Get_Text('validation.required_images'));
+            return;
+        }
+
+        if (!form_data.description.trim()) {
+            alert(F_Get_Text('validation.required_all'));
+            return;
+        }
 
         await p_on_submit(form_data, front_file, back_file);
     };
 
     return (
-        <form onSubmit={F_Handle_Submit} className="space-y-6">
+        <form onSubmit={F_Handle_Submit} className="space-y-6 max-w-[600px] mx-auto">
 
-            {/* COMPACT LAYOUT: Images Top (Side-by-Side) */}
-            <div className="flex gap-4">
-                {/* Image Upload Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                    {/* Front Photo */}
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-secondary ml-1">
-                            {F_Get_Text('new_product.front_photo_label')} <span className="text-primary">*</span>
-                        </label>
-                        <div className="h-64">
-                            <F_File_Upload
-                                p_on_file_select={set_front_file}
-                                p_accept="image/png, image/jpeg, image/webp, image/tiff"
-                                p_preview_url={p_initial_data?.front_image}
-                            />
-                        </div>
+            {/* IMAGES: STRICT SIDE-BY-SIDE ON ALL SCREENS */}
+            <div className="grid grid-cols-2 gap-4 mb-6">
+                {/* Front Photo */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-secondary ml-1">
+                        {F_Get_Text('new_product.upload.front')} <span className="text-primary">*</span>
+                    </label>
+                    <div className="h-48">
+                        <F_File_Upload
+                            p_label="" // Handled by outer label
+                            p_file={front_file}
+                            p_on_change={set_front_file}
+                            p_preview_url={p_initial_data?.front_image}
+                        />
                     </div>
+                </div>
 
-                    {/* Back Photo */}
-                    <div className="space-y-3">
-                        <label className="block text-sm font-medium text-secondary ml-1">
-                            {F_Get_Text('new_product.back_photo_label')}
-                        </label>
-                        <div className="h-64">
-                            <F_File_Upload
-                                p_on_file_select={set_back_file}
-                                p_accept="image/png, image/jpeg, image/webp, image/tiff"
-                                p_preview_url={p_initial_data?.back_image}
-                            />
-                        </div>
+                {/* Back Photo */}
+                <div className="space-y-2">
+                    <label className="block text-sm font-medium text-secondary ml-1">
+                        {F_Get_Text('new_product.upload.back')} <span className="text-primary">*</span>
+                    </label>
+                    <div className="h-48">
+                        <F_File_Upload
+                            p_label=""
+                            p_file={back_file}
+                            p_on_change={set_back_file}
+                            p_preview_url={p_initial_data?.back_image}
+                        />
                     </div>
                 </div>
             </div>

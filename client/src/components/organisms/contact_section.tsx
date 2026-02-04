@@ -5,7 +5,7 @@ import { F_Button } from '../atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 const CONTACT_INFO = {
-    email: 'info@beydahsaglam.com',
+    email: F_Get_Text('contact.contact_email'),
 };
 
 const SOCIAL_LINKS = [

@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { F_Validate_Image_File } from '../../utils/file_utils';
 import { F_Text } from '../atoms/text';
+import { F_Get_Text } from '../../utils/i18n_utils';
 
 interface File_Upload_Props {
     p_label: string;
@@ -31,10 +32,10 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
 
         if (e.dataTransfer.files && e.dataTransfer.files[0]) {
             const dropped_file = e.dataTransfer.files[0];
-            if (F_Validate_Image_File(dropped_file)) {
+            if (F_Validate_Image_File(dropped_file) || dropped_file.type === 'image/svg+xml') {
                 p_on_change(dropped_file);
             } else {
-                alert("Invalid file type. Please upload an image (jpg, png, webp).");
+                alert(F_Get_Text('new_product.upload.error_type'));
             }
         }
     };
@@ -86,7 +87,7 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
                             className="w-full h-full object-cover rounded-lg"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-lg">
-                            <span className="text-white text-sm font-medium">Change Photo</span>
+                            <span className="text-white text-sm font-medium">{F_Get_Text('new_product.upload.change_photo')}</span>
                         </div>
                     </div>
                 ) : (
@@ -95,10 +96,10 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                         <span className="text-secondary text-sm block">
-                            Click or Drag to Upload
+                            {F_Get_Text('new_product.upload.click_to_upload')}
                         </span>
                         <span className="text-secondary/60 text-xs block mt-1">
-                            JPG, PNG, WEBP
+                            {F_Get_Text('new_product.upload.file_format')}
                         </span>
                     </div>
                 )}

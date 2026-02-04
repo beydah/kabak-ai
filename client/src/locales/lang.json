@@ -105,6 +105,7 @@
         "contact": {
             "title": "İletişim",
             "subtitle": "Sorularınız mı var? Bize ulaşın",
+            "contact_email": "info.beydahsaglam@gmail.com",
             "email_label": "E-posta",
             "phone_label": "Telefon",
             "social_label": "Sosyal Medya & Bağlantılar",
@@ -343,6 +344,7 @@
         "contact": {
             "title": "Contact",
             "subtitle": "Have questions? Get in touch",
+            "contact_email": "info.beydahsaglam@gmail.com",
             "email_label": "Email",
             "phone_label": "Phone",
             "social_label": "Social Media & Links",

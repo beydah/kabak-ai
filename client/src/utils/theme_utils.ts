@@ -81,31 +81,33 @@ export const F_Transition_Theme = (e: React.MouseEvent, p_on_complete?: () => vo
     circle.style.borderRadius = '50%';
     circle.style.transform = 'translate(-50%, -50%)';
 
-    // Correct Colors from Index.css + Text Overlay
+    // Correct Colors from Index.css
     // Dark Target: #25343F
     // Light Target: #EAEFEF
     circle.style.backgroundColor = next_theme === 'dark' ? '#25343F' : '#EAEFEF';
-    circle.style.zIndex = '9999';
+    circle.style.zIndex = '9998'; // Below text
     circle.style.pointerEvents = 'none';
-    circle.style.display = 'flex';
-    circle.style.alignItems = 'center';
-    circle.style.justifyContent = 'center';
-    circle.style.overflow = 'hidden'; // Clip the text
     circle.style.transition = 'width 1s ease-in-out, height 1s ease-in-out';
 
-    // Branding Text
-    const text = document.createElement('span');
+    // Branding Text (Fixed Center)
+    const text = document.createElement('div');
     text.innerText = 'Kabak AI';
-    text.style.fontFamily = 'Inter, sans-serif'; // Ensure font matches
+    text.style.position = 'fixed';
+    text.style.left = '50%';
+    text.style.top = '50%';
+    text.style.transform = 'translate(-50%, -50%)';
+    text.style.fontFamily = 'Inter, sans-serif';
     text.style.fontSize = '2rem';
     text.style.fontWeight = 'bold';
     text.style.color = next_theme === 'dark' ? '#EAEFEF' : '#25343F'; // Contrast color
     text.style.opacity = '0';
+    text.style.zIndex = '9999'; // Above circle
+    text.style.pointerEvents = 'none';
     text.style.transition = 'opacity 0.4s ease-in-out';
     text.style.whiteSpace = 'nowrap';
 
-    circle.appendChild(text);
     document.body.appendChild(circle);
+    document.body.appendChild(text);
 
     // Force reflow
     circle.getBoundingClientRect();
@@ -136,9 +138,8 @@ export const F_Transition_Theme = (e: React.MouseEvent, p_on_complete?: () => vo
             circle.style.transition = 'opacity 0.4s ease-out';
 
             setTimeout(() => {
-                if (document.body.contains(circle)) {
-                    document.body.removeChild(circle);
-                }
+                if (document.body.contains(circle)) document.body.removeChild(circle);
+                if (document.body.contains(text)) document.body.removeChild(text);
             }, 400);
         }, 200); // Short delay to let users see the logo
 

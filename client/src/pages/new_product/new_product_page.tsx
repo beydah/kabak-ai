@@ -1,28 +1,50 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Product_Form } from '../../components/organisms/product_form';
-import { F_Save_Product, I_Product_Data } from '../../utils/storage_utils';
+import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
+import { F_Save_Product_Preferences, F_Get_Product_Preferences } from '../../utils/cookie_utils';
 
 export const F_New_Product_Page: React.FC = () => {
     const navigate = useNavigate();
 
+    // Initial Data Logic (Draft vs Cookies vs Empty)
+    const F_Get_Initial_Data = (): Partial<I_Product_Data> => {
+        const draft = F_Get_Draft();
+        if (draft) return draft;
+
+        const cookies = F_Get_Product_Preferences();
+        return cookies; // Will populate gender, bg etc.
+    };
+
+    const initial_data = F_Get_Initial_Data();
+
+    // Auto-Save Draft happens inside ProductForm? 
+    // Ideally ProductForm should accept an onChange to bubble up changes, or we handle it here.
+    // Since ProductForm handles state internally, we need to inject a mechanism.
+    // For now, simpler: we modify ProductForm to accept `p_on_change` and we save draft there.
+    // OR: ProductForm can handle draft internal logic if we pass `p_enable_draft`.
+    // Let's modify ProductForm usage. We need to catch updates.
+
+    // Actually, ProductForm props don't have on_change.
+    // We will update ProductForm to emit changes or handle draft internally?
+    // Let's pass `p_on_draft_update` to ProductForm.
+
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
-        if (!p_front_file) {
-            alert("Please upload a front photo.");
+        if (!p_front_file && !p_data.front_image) {
+            alert("Please upload a front photo."); // Should be handled by form validation now
             return;
         }
 
         try {
-            const front_b64 = await F_File_To_Base64(p_front_file);
-            const back_b64 = p_back_file ? await F_File_To_Base64(p_back_file) : '';
+            const front_b64 = p_front_file ? await F_File_To_Base64(p_front_file) : (p_data.front_image || '');
+            const back_b64 = p_back_file ? await F_File_To_Base64(p_back_file) : (p_data.back_image || '');
 
             // Ensure all required fields for I_Product_Data are present
-            // We cast to any or check fields if stricter validation needed
             const new_product: I_Product_Data = {
                 id: uuidv4(),
                 created_at: Date.now(),
@@ -34,10 +56,19 @@ export const F_New_Product_Page: React.FC = () => {
                 background: p_data.background || 'orange',
                 accessory: p_data.accessory || 'glasses',
                 age: p_data.age || 30,
-                description: p_data.description || ''
+                description: p_data.description || '',
+                status: 'running' // Set to RUNNING
             };
 
+            // 1. Save Product
             F_Save_Product(new_product);
+
+            // 2. Save Preferences (Cookies)
+            F_Save_Product_Preferences(p_data);
+
+            // 3. Clear Draft
+            F_Clear_Draft();
+
             navigate('/collection');
 
         } catch (error) {
@@ -46,9 +77,13 @@ export const F_New_Product_Page: React.FC = () => {
         }
     };
 
+    const F_Handle_Draft_Update = (data: Partial<I_Product_Data>) => {
+        F_Save_Draft(data);
+    };
+
     return (
         <F_Main_Template p_is_authenticated={true}>
-            <div className="max-w-4xl mx-auto">
+            <div className="max-w-2xl mx-auto">
                 {/* Back Link */}
                 <button
                     onClick={() => navigate('/collection')}
@@ -65,8 +100,10 @@ export const F_New_Product_Page: React.FC = () => {
                 {/* Form Card */}
                 <div className="bg-white dark:bg-bg-dark rounded-xl shadow-lg border border-secondary/20 p-6 md:p-8">
                     <F_Product_Form
+                        p_initial_data={initial_data as I_Product_Data} // Cast to satisfy prop requirement if Partial is not enough, but we changed prop type to Partial.
                         p_on_submit={F_Handle_Submit}
                         p_on_cancel={() => navigate('/collection')}
+                        p_on_change={F_Handle_Draft_Update}
                     />
                 </div>
             </div>

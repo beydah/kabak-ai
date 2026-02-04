@@ -21,3 +21,23 @@ export const F_Get_Cookie = (p_name: string): string | null => {
     }
     return null;
 };
+
+// Form Preferences specific keys
+const PREF_KEYS = ['gender', 'age', 'body_type', 'fit', 'background', 'accessory'];
+
+export const F_Save_Product_Preferences = (p_data: any) => {
+    PREF_KEYS.forEach(key => {
+        if (p_data[key]) {
+            F_Set_Cookie(`pref_${key}`, p_data[key].toString(), 365);
+        }
+    });
+};
+
+export const F_Get_Product_Preferences = (): any => {
+    const prefs: any = {};
+    PREF_KEYS.forEach(key => {
+        const val = F_Get_Cookie(`pref_${key}`);
+        if (val) prefs[key] = val;
+    });
+    return prefs;
+};

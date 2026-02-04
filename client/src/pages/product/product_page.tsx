@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit2, Trash2, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Button } from '../../components/atoms/button';
@@ -13,6 +13,7 @@ export const F_Product_Page: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [product, set_product] = useState<I_Product_Data | undefined>(undefined);
+    const [copied_field, set_copied_field] = useState<string | null>(null);
 
     // State for image switcher
     const [active_image, set_active_image] = useState<'front' | 'back'>('front');
@@ -70,6 +71,12 @@ export const F_Product_Page: React.FC = () => {
         navigate('/collection');
     };
 
+    const F_Copy_To_Clipboard = (text: string, field: string) => {
+        navigator.clipboard.writeText(text);
+        set_copied_field(field);
+        setTimeout(() => set_copied_field(null), 2000);
+    };
+
     if (!product) {
         return (
             <F_Main_Template p_is_authenticated={true}>
@@ -82,6 +89,10 @@ export const F_Product_Page: React.FC = () => {
 
     const current_image_src = active_image === 'front' ? product.front_image : (product.back_image || product.front_image);
     const has_multiple_images = !!product.back_image;
+
+    // Display Data
+    const display_title = product.generated_title || F_Get_Text('product.title');
+    const display_desc = product.generated_description || product.description || 'No description provided.';
 
     return (
         <F_Main_Template p_is_authenticated={true}>
@@ -134,8 +145,8 @@ export const F_Product_Page: React.FC = () => {
                             <button
                                 onClick={() => set_active_image('front')}
                                 className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'front'
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-transparent hover:border-secondary/30'
+                                    ? 'border-primary ring-2 ring-primary/20'
+                                    : 'border-transparent hover:border-secondary/30'
                                     }`}
                             >
                                 <img src={product.front_image} alt="Front Thumbnail" className="w-full h-full object-cover" />
@@ -146,8 +157,8 @@ export const F_Product_Page: React.FC = () => {
                                 <button
                                     onClick={() => set_active_image('back')}
                                     className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'back'
-                                            ? 'border-primary ring-2 ring-primary/20'
-                                            : 'border-transparent hover:border-secondary/30'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-transparent hover:border-secondary/30'
                                         }`}
                                 >
                                     <img src={product.back_image} alt="Back Thumbnail" className="w-full h-full object-cover" />
@@ -159,21 +170,49 @@ export const F_Product_Page: React.FC = () => {
                     {/* RIGHT COLUMN: Details & Actions */}
                     <div className="space-y-8">
 
-                        {/* Title & Price/Status placeholder */}
+                        {/* Title Section */}
                         <div className="border-b border-secondary/10 pb-6">
-                            <F_Text p_variant="h1" p_class_name="mb-2">
-                                {F_Get_Text('product.title')}
-                            </F_Text>
-                            <p className="text-secondary text-sm">ID: {product.id}</p>
+                            <div className="flex items-start justify-between gap-4">
+                                <F_Text p_variant="h1" p_class_name="mb-2 leading-tight">
+                                    {display_title}
+                                </F_Text>
+                                <button
+                                    onClick={() => F_Copy_To_Clipboard(display_title, 'title')}
+                                    className="p-2 text-secondary hover:text-primary transition-colors flex-shrink-0"
+                                    title="Copy Title"
+                                >
+                                    {copied_field === 'title' ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
+                                </button>
+                            </div>
+                            <p className="text-secondary text-sm mt-1">ID: {product.id}</p>
                         </div>
 
-                        {/* Description */}
+                        {/* Description Section */}
                         <div>
-                            <h3 className="text-lg font-semibold text-text-light dark:text-text-dark mb-2">
-                                {F_Get_Text('new_product.labels.description')}
-                            </h3>
-                            <p className="text-secondary leading-relaxed">
-                                {product.description || 'No description provided.'}
+                            <div className="flex items-center justify-between mb-2">
+                                <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">
+                                    {F_Get_Text('new_product.labels.description')}
+                                </h3>
+                                <button
+                                    onClick={() => F_Copy_To_Clipboard(display_desc, 'desc')}
+                                    className="p-1.5 text-secondary hover:text-primary transition-colors text-sm flex items-center gap-1.5"
+                                    title="Copy Description"
+                                >
+                                    {copied_field === 'desc' ? (
+                                        <>
+                                            <Check size={16} className="text-green-500" />
+                                            <span className="text-green-500 font-medium">Copied!</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Copy size={16} />
+                                            <span>Copy</span>
+                                        </>
+                                    )}
+                                </button>
+                            </div>
+                            <p className="text-secondary leading-relaxed whitespace-pre-line p-4 bg-secondary/5 rounded-lg border border-secondary/10 text-sm">
+                                {display_desc}
                             </p>
                         </div>
 
@@ -181,11 +220,7 @@ export const F_Product_Page: React.FC = () => {
                         <div className="grid grid-cols-2 gap-y-4 gap-x-8">
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.gender')}</dt>
-                                {/* We should translate the *values* too, but keys are dynamic strings. 
-                                    Ideally we map values to F_Get_Text keys. 
-                                    For now, we rely on them matching keys like 'new_product.options.gender.' + value */}
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {/* Try to translate, fallback to raw value */}
                                     {product.gender ? F_Get_Text(`new_product.options.gender.${product.gender}`) : product.gender}
                                 </dd>
                             </div>

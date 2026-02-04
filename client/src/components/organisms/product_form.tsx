@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { F_Button } from '../../components/atoms/button';
 import { F_File_Upload } from '../../components/molecules/file_upload';
-import { F_Get_Text } from '../../utils/i18n_utils';
 import { I_Product_Data } from '../../utils/storage_utils';
+import { F_Get_Text } from '../../utils/i18n_utils';
 import { v4 as uuidv4 } from 'uuid';
 
 interface Product_Form_Props {
-    p_initial_data?: I_Product_Data;
-    p_on_submit: (data: Partial<I_Product_Data>, front_file: File | null, back_file: File | null) => Promise<void>;
+    p_initial_data?: Partial<I_Product_Data>;
+    p_on_submit: (data: Partial<I_Product_Data>, front: File | null, back: File | null) => Promise<void>;
     p_on_cancel: () => void;
+    p_on_change?: (data: Partial<I_Product_Data>) => void;
     p_is_edit_mode?: boolean;
     p_submit_label?: string;
 }
@@ -17,6 +18,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     p_initial_data,
     p_on_submit,
     p_on_cancel,
+    p_on_change,
     p_is_edit_mode = false,
     p_submit_label
 }) => {
@@ -26,26 +28,27 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
     // State for form data
     const [form_data, set_form_data] = useState({
-        gender: 'female',
-        body_type: 'average',
-        fit: 'regular',
-        background: 'orange',
-        accessory: 'glasses',
-        age: 30,
-        description: ''
+        gender: p_initial_data?.gender || 'female',
+        age: p_initial_data?.age || 30,
+        body_type: p_initial_data?.body_type || 'average',
+        fit: p_initial_data?.fit || 'regular',
+        background: p_initial_data?.background || 'orange',
+        accessory: p_initial_data?.accessory || 'none',
+        description: p_initial_data?.description || '',
     });
 
     useEffect(() => {
         if (p_initial_data) {
-            set_form_data({
-                gender: p_initial_data.gender,
-                body_type: p_initial_data.body_type,
-                fit: p_initial_data.fit,
-                background: p_initial_data.background,
-                accessory: p_initial_data.accessory,
-                age: p_initial_data.age,
+            set_form_data(prev => ({
+                ...prev,
+                gender: p_initial_data.gender || 'female',
+                body_type: p_initial_data.body_type || 'average',
+                fit: p_initial_data.fit || 'regular',
+                background: p_initial_data.background || 'orange',
+                accessory: p_initial_data.accessory || 'none',
+                age: p_initial_data.age || 30,
                 description: p_initial_data.description || ''
-            });
+            }));
         }
     }, [p_initial_data]);
 

@@ -24,8 +24,8 @@ const JobContext = createContext<JobContextType | undefined>(undefined);
 export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [error_logs, set_error_logs] = useState<I_Error_Log[]>([]);
 
-    const refresh_logs = () => {
-        set_error_logs(F_Get_Error_Logs());
+    const refresh_logs = async () => {
+        set_error_logs(await F_Get_Error_Logs());
     };
 
     useEffect(() => {
@@ -34,8 +34,8 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
         // POLL for "running" jobs
         // In a real app, this might be a websocket or a dedicated worker.
         // Here we use an interval to check local storage state.
-        const interval = setInterval(() => {
-            const products = F_Get_All_Products();
+        const interval = setInterval(async () => {
+            const products = await F_Get_All_Products();
             const running_products = products.filter(p => p.status === 'running');
 
             running_products.forEach(async (product) => {

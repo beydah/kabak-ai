@@ -62,4 +62,65 @@
   .link {
     @apply text-primary hover:underline transition-colors;
   }
+
+  /* CUSTOM ANIMATIONS */
+  @keyframes shimmer {
+    0% {
+      transform: translateX(-100%);
+    }
+
+    100% {
+      transform: translateX(100%);
+    }
+  }
+
+  .animate-shimmer {
+    animation: shimmer 2s infinite linear;
+  }
+
+  @keyframes breathe {
+
+    0%,
+    100% {
+      transform: scale(1.0);
+      opacity: 0.9;
+    }
+
+    50% {
+      transform: scale(1.02);
+      opacity: 1;
+    }
+  }
+
+  .animate-breathe {
+    animation: breathe 3s infinite ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  .animate-fade-out {
+    animation: fadeOut 0.3s ease-in forwards;
+  }
 }

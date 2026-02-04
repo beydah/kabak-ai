@@ -61,7 +61,7 @@ export const F_New_Product_Page: React.FC = () => {
             };
 
             // 1. Save Product
-            F_Save_Product(new_product);
+            await F_Save_Product(new_product);
 
             // 2. Save Preferences (Cookies)
             F_Save_Product_Preferences(p_data);

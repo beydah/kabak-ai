@@ -9,25 +9,36 @@ interface Modal_Props {
 }
 
 export const F_Modal: React.FC<Modal_Props> = ({ p_is_open, p_on_close, p_title, children }) => {
+    const [visible, setVisible] = React.useState(false);
+    const [render, setRender] = React.useState(false);
+
+    useEffect(() => {
+        if (p_is_open) {
+            setRender(true);
+            setTimeout(() => setVisible(true), 10);
+        } else {
+            setVisible(false);
+            const timer = setTimeout(() => setRender(false), 300);
+            return () => clearTimeout(timer);
+        }
+    }, [p_is_open]);
 
     // Prevent background scrolling when modal is open
     useEffect(() => {
         if (p_is_open) {
             document.body.style.overflow = 'hidden';
         } else {
-            document.body.style.overflow = 'unset';
+            document.body.style.overflow = 'unset'; // Restore
         }
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
+        return () => { document.body.style.overflow = 'unset'; };
     }, [p_is_open]);
 
-    if (!p_is_open) return null;
+    if (!render) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity">
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
             <div
-                className="bg-white dark:bg-[#0A0A0A] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col relative animate-fade-in-up"
+                className={`bg-white dark:bg-[#0A0A0A] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col relative transition-all duration-300 transform ${visible ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

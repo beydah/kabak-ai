@@ -2,7 +2,7 @@ import React from 'react';
 import { F_Modal } from '../molecules/modal';
 import { F_Product_Form } from './product_form';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { I_Product_Data } from '../../utils/storage_utils';
+import { I_Product_Data, F_Save_Product } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 
 interface Edit_Product_Modal_Props {
@@ -39,16 +39,12 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
                 back_image: back_b64
             };
 
-            // Update in local storage
-            // Manual update logic since F_Save_Product only adds new ones in our mock
-            const all = JSON.parse(localStorage.getItem('kabak_ai_products') || '[]');
-            const filtered = all.filter((p: any) => p.id !== p_product.id);
-            filtered.unshift(updated_product); // Add updated to top, or keep index? Unshift implies recent.
-            localStorage.setItem('kabak_ai_products', JSON.stringify(filtered));
+            // Update in DB (Async)
+            // F_Save_Product handles upsert in IndexedDB
+            await F_Save_Product(updated_product);
 
             p_on_update();
             p_on_close();
-            // alert(F_Get_Text('product.update_success'));
 
         } catch (error) {
             console.error("Error updating product:", error);

@@ -5,7 +5,7 @@ import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Button } from '../../components/atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
-import { F_Get_Product_By_Id, I_Product_Data } from '../../utils/storage_utils';
+import { F_Get_Product_By_Id, F_Delete_Product_By_Id, I_Product_Data } from '../../utils/storage_utils';
 import { F_Edit_Product_Modal } from '../../components/organisms/edit_product_modal';
 import { F_Confirmation_Modal } from '../../components/molecules/confirmation_modal';
 
@@ -26,9 +26,9 @@ export const F_Product_Page: React.FC = () => {
         F_Load_Product();
     }, [id]);
 
-    const F_Load_Product = () => {
+    const F_Load_Product = async () => {
         if (id) {
-            const data = F_Get_Product_By_Id(id);
+            const data = await F_Get_Product_By_Id(id);
             if (data) {
                 set_product(data);
                 set_active_image('front');
@@ -64,11 +64,11 @@ export const F_Product_Page: React.FC = () => {
         }
     };
 
-    const F_Handle_Delete = () => {
-        const all = JSON.parse(localStorage.getItem('kabak_ai_products') || '[]');
-        const filtered = all.filter((p: any) => p.id !== id);
-        localStorage.setItem('kabak_ai_products', JSON.stringify(filtered));
-        navigate('/collection');
+    const F_Handle_Delete = async () => {
+        if (id) {
+            await F_Delete_Product_By_Id(id);
+            navigate('/collection');
+        }
     };
 
     const F_Copy_To_Clipboard = (text: string, field: string) => {

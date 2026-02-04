@@ -8,7 +8,7 @@ export const F_Set_Cookie = (p_name: string, p_value: string, p_days: number = 7
         date.setTime(date.getTime() + (p_days * 24 * 60 * 60 * 1000));
         expires = "; expires=" + date.toUTCString();
     }
-    document.cookie = p_name + "=" + (p_value || "") + expires + "; path=/";
+    document.cookie = p_name + "=" + (p_value || "") + expires + "; path=/; SameSite=Lax; Secure";
 };
 
 export const F_Get_Cookie = (p_name: string): string | null => {

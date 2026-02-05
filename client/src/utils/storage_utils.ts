@@ -119,7 +119,11 @@ export const F_Remove_Error_Log = async (p_id: string) => {
 
 // METRICS OPERATIONS (ASYNC - IndexedDB)
 export const F_Track_Usage = async (model_id: string, cost: number) => {
-    const today = new Date().toISOString().split('T')[0];
+    // Use local YYYY-MM-DD
+    const d = new Date();
+    const offset = d.getTimezoneOffset();
+    const today = new Date(d.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+
     let metric = await DB_Service.getMetric(model_id);
 
     if (!metric) {

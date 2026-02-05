@@ -11,8 +11,10 @@ export const F_Footer: React.FC = () => {
                         <p className="text-sm opacity-80">
                             {F_Get_Text('footer.copyright')}
                         </p>
-                        <p className="text-xs opacity-60 mt-1">
-                            {F_Get_Text('footer.creator')}
+                        <p className="text-xs opacity-60 mt-1 flex gap-1">
+                            {F_Get_Text('footer.creator').split('Beydah Sağlam')[0]}
+                            <a href="https://beydahsaglam.com" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Beydah Sağlam</a>
+                            {F_Get_Text('footer.creator').split('Beydah Sağlam')[1]}
                         </p>
                     </div>
                     <p className="text-sm opacity-80">

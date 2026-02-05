@@ -136,9 +136,9 @@
             "contact_link": "iletişime geçin"
         },
         "collection": {
-            "title": "Koleksiyonlarım",
+            "title": "Koleksiyon",
             "empty_state": "Henüz koleksiyon yok",
-            "create_new": "Yeni Koleksiyon"
+            "create_new": "Yeni Ürün"
         },
         "new_product": {
             "title": "Yeni Ürün Girişi",
@@ -236,6 +236,25 @@
             "loading": "Yükleniyor...",
             "error": "Bir hata oluştu.",
             "success": "İşlem başarılı."
+        },
+        "notifications": {
+            "title": "Bildirimler",
+            "empty": "Yeni bildirim yok.",
+            "clear_all": "Tümünü Temizle",
+            "copy_all": "Tümünü Kopyala",
+            "processing_failed": "İşlem Başarısız"
+        },
+        "analytics": {
+            "title": "Kullanım Analizi",
+            "view_daily": "Günlük",
+            "view_weekly": "Haftalık",
+            "view_monthly": "Aylık",
+            "total_requests": "Toplam İstek",
+            "estimated_cost": "Tahmini Maliyet",
+            "requests_per_day": "Günlük İstek Limiti (RPD)",
+            "usage": "Kullanım",
+            "limit_reached": "Günlük limit aşıldı!",
+            "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!"
         }
     },
     "en": {
@@ -375,9 +394,9 @@
             "contact_link": "contact us"
         },
         "collection": {
-            "title": "My Collections",
+            "title": "Collection",
             "empty_state": "No collections yet",
-            "create_new": "New Collection"
+            "create_new": "New Product"
         },
         "new_product": {
             "title": "New Product Entry",
@@ -475,6 +494,25 @@
             "loading": "Loading...",
             "error": "An error occurred.",
             "success": "Success."
+        },
+        "notifications": {
+            "title": "Notifications",
+            "empty": "No new notifications.",
+            "clear_all": "Clear All",
+            "copy_all": "Copy All",
+            "processing_failed": "Processing Failed"
+        },
+        "analytics": {
+            "title": "Usage Analytics",
+            "view_daily": "Daily",
+            "view_weekly": "Weekly",
+            "view_monthly": "Monthly",
+            "total_requests": "Total Requests",
+            "estimated_cost": "Estimated Cost",
+            "requests_per_day": "Requests Per Day (RPD)",
+            "usage": "Usage",
+            "limit_reached": "Daily limit reached!",
+            "empty_state": "No usage data recorded yet. Generate some products to see analytics!"
         },
         "settings": {
             "title": "Settings",

@@ -63,11 +63,30 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
             >
                 {/* Image Container */}
                 <div className={`aspect-[3/4] bg-secondary/10 relative overflow-hidden`}>
+
+                    {/* Front Image */}
                     <img
-                        src={display_image}
-                        alt={current_view}
-                        className={`w-full h-full object-cover transition-transform duration-500 ${(is_running) ? 'scale-105 animate-breathe opacity-90 blur-[2px]' : ''} ${(is_exited) ? 'blur-sm grayscale' : ''}`}
+                        src={p_product.front_image}
+                        alt="front"
+                        className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
+                            ${current_view === 'front' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
+                            ${(is_running) ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
+                            ${(is_exited) ? 'blur-sm grayscale' : ''}
+                        `}
                     />
+
+                    {/* Back Image (if exists) */}
+                    {has_back_image && (
+                        <img
+                            src={p_product.back_image}
+                            alt="back"
+                            className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
+                                ${current_view === 'back' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
+                                ${(is_running) ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
+                                ${(is_exited) ? 'blur-sm grayscale' : ''}
+                            `}
+                        />
+                    )}
 
                     {/* RUNNING STATE - Shimmer Animation */}
                     {is_running && (
@@ -103,20 +122,20 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                     {!is_running && !is_exited && (
                         <>
                             {has_back_image && (
-                                <>
+                                <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <button
                                         onClick={F_Toggle_View}
-                                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1 bg-black/30 hover:bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
                                     >
                                         <ChevronLeft size={16} />
                                     </button>
                                     <button
                                         onClick={F_Toggle_View}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 bg-black/30 hover:bg-black/50 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
                                     >
                                         <ChevronRight size={16} />
                                     </button>
-                                </>
+                                </div>
                             )}
                         </>
                     )}

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Info, AlertTriangle } from 'lucide-react';
 import { F_Get_All_Metrics, I_Metric, F_Subscribe_To_Updates } from '../../utils/storage_utils';
 import { F_Text } from '../atoms/text';
+import { F_Get_Text } from '../../utils/i18n_utils';
 
 const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> = {
     'gemini-2.0-flash': { rpd: 1500, desc: 'Primary SEO Model (Fast & Efficient)', label: 'Gemini 2.0 Flash' },
@@ -28,14 +29,37 @@ export const F_Analytics_Dashboard: React.FC = () => {
     };
 
     const F_Get_Filtered_Data = (metric: I_Metric) => {
-        const today = new Date().toISOString().split('T')[0];
+        // Use local date logic to match storage_utils
+        const d = new Date();
+        const offset = d.getTimezoneOffset();
+        const today_str = new Date(d.getTime() - (offset * 60 * 1000)).toISOString().split('T')[0];
+
+        // 1. Get Today's RPD usage (Always needed for the progress bar limit)
+        const today_entry = metric.usage_history.find(h => h.date === today_str);
+        const rpd_count = today_entry ? today_entry.count : 0;
+
+        // 2. Get View Stats
+        let view_count = 0;
+        let view_cost = 0;
 
         if (view_mode === 'daily') {
-            const entry = metric.usage_history.find(h => h.date === today);
-            return entry ? { count: entry.count, cost: entry.cost } : { count: 0, cost: 0 };
+            view_count = rpd_count;
+            view_cost = today_entry ? today_entry.cost : 0;
+        } else {
+            // Aggregate
+            const days = view_mode === 'weekly' ? 7 : 30;
+            const cutoff = new Date();
+            cutoff.setDate(cutoff.getDate() - days);
+
+            metric.usage_history.forEach(h => {
+                if (new Date(h.date) >= cutoff) {
+                    view_count += h.count;
+                    view_cost += h.cost;
+                }
+            });
         }
-        // Simplified total for other views (Since backend filtering isn't implemented deeply)
-        return { count: metric.total_requests, cost: metric.total_cost };
+
+        return { count: view_count, cost: view_cost, rpd_count };
     };
 
     const F_Get_Progress_Color = (percent: number) => {
@@ -49,7 +73,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
             <div className="flex items-center justify-between mb-6">
                 <F_Text p_variant="h2" p_class_name="text-xl font-bold flex items-center gap-2">
                     <span className="w-2 h-8 bg-primary rounded-full block"></span>
-                    Usage & Analytics
+                    {F_Get_Text('analytics.title')}
                 </F_Text>
 
                 {/* Filters */}
@@ -59,11 +83,11 @@ export const F_Analytics_Dashboard: React.FC = () => {
                             key={m}
                             onClick={() => set_view_mode(m as any)}
                             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${view_mode === m
-                                    ? 'bg-white dark:bg-bg-dark text-primary shadow-sm'
-                                    : 'text-secondary hover:text-text-light dark:hover:text-text-dark'
+                                ? 'bg-white dark:bg-bg-dark text-primary shadow-sm'
+                                : 'text-secondary hover:text-text-light dark:hover:text-text-dark'
                                 } capitalize`}
                         >
-                            {m}
+                            {F_Get_Text(`analytics.view_${m}`)}
                         </button>
                     ))}
                 </div>
@@ -75,8 +99,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                     <div className="p-4 bg-secondary/10 rounded-full mb-3 text-secondary">
                         <AlertTriangle size={24} />
                     </div>
-                    <p className="text-secondary font-medium">No usage data available yet.</p>
-                    <p className="text-secondary/60 text-sm mt-1">Start creating products to see analytics!</p>
+                    <p className="text-secondary font-medium">{F_Get_Text('analytics.empty_state')}</p>
                 </div>
             )}
 
@@ -85,7 +108,9 @@ export const F_Analytics_Dashboard: React.FC = () => {
                 {metrics.map((m) => {
                     const info = MODEL_INFO[m.model_id] || { rpd: 1000, desc: 'Unknown Model', label: m.model_id };
                     const data = F_Get_Filtered_Data(m);
-                    const usage_percent = Math.min((data.count / info.rpd) * 100, 100);
+
+                    // RPD is always based on TODAY's count, regardless of view mode
+                    const usage_percent = Math.min((data.rpd_count / info.rpd) * 100, 100);
                     const progress_color = F_Get_Progress_Color(usage_percent);
 
                     return (
@@ -107,14 +132,14 @@ export const F_Analytics_Dashboard: React.FC = () => {
                                 </div>
                                 <div className="text-right">
                                     <div className="text-2xl font-bold text-primary">{data.count}</div>
-                                    <div className="text-xs text-secondary uppercase tracking-wider">Requests</div>
+                                    <div className="text-xs text-secondary uppercase tracking-wider">{F_Get_Text('analytics.total_requests')}</div>
                                 </div>
                             </div>
 
-                            {/* Progress Bar */}
+                            {/* Progress Bar (Always Daily Limit) */}
                             <div className="mb-4">
                                 <div className="flex justify-between text-xs mb-1">
-                                    <span className="text-secondary">Daily Limit Usage</span>
+                                    <span className="text-secondary">{F_Get_Text('analytics.requests_per_day')}</span>
                                     <span className={`font-medium ${usage_percent >= 80 ? 'text-red-500' : 'text-text-light dark:text-text-dark'}`}>
                                         {usage_percent.toFixed(1)}%
                                     </span>
@@ -126,14 +151,17 @@ export const F_Analytics_Dashboard: React.FC = () => {
                                     />
                                 </div>
                                 <div className="text-[10px] text-right text-secondary mt-1">
-                                    {data.count} / {info.rpd.toLocaleString()} RPD
+                                    {data.rpd_count} / {info.rpd.toLocaleString()}
                                 </div>
+                                {usage_percent >= 100 && (
+                                    <p className="text-[10px] text-red-500 font-bold mt-1 text-center animate-pulse">{F_Get_Text('analytics.limit_reached')}</p>
+                                )}
                             </div>
 
                             {/* Cost */}
                             <div className="pt-3 border-t border-secondary/10 flex justify-between items-center">
                                 <span className="text-xs text-secondary flex items-center gap-1">
-                                    Est. Cost
+                                    {F_Get_Text('analytics.estimated_cost')}
                                     <span className="text-[10px] bg-secondary/10 px-1 rounded">USD</span>
                                 </span>
                                 <span className="font-mono text-sm font-medium text-text-light dark:text-text-dark">

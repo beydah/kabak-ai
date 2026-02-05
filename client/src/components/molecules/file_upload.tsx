@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { F_Validate_Image_File } from '../../utils/file_utils';
 import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
@@ -10,11 +10,29 @@ interface File_Upload_Props {
     p_preview_url?: string;
 }
 
+// Memoize removed to fix "Component is not a function" crash if caused by object return
 export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_on_change, p_preview_url }) => {
     const [is_dragging, set_is_dragging] = useState(false);
+    const [preview, set_preview] = useState<string | undefined>(p_preview_url);
     const input_ref = useRef<HTMLInputElement>(null);
 
-    const active_preview = p_file ? URL.createObjectURL(p_file) : p_preview_url;
+    // Handle File -> URL conversion and cleanup
+    useEffect(() => {
+        let object_url: string | undefined;
+
+        if (p_file) {
+            object_url = URL.createObjectURL(p_file);
+            set_preview(object_url);
+        } else {
+            set_preview(p_preview_url);
+        }
+
+        return () => {
+            if (object_url) {
+                URL.revokeObjectURL(object_url);
+            }
+        };
+    }, [p_file, p_preview_url]);
 
     const F_Handle_Drag_Over = (e: React.DragEvent) => {
         e.preventDefault();
@@ -79,10 +97,10 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
                     onChange={F_Handle_Input_Change}
                 />
 
-                {active_preview ? (
+                {preview ? (
                     <div className="relative w-full h-full group">
                         <img
-                            src={active_preview}
+                            src={preview}
                             alt="Preview"
                             className="w-full h-full object-cover rounded-lg"
                         />

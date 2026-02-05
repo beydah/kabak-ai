@@ -4,6 +4,7 @@ import { F_Theme_Toggle } from '../molecules/theme_toggle';
 import { F_Get_Text, F_Get_Language, F_Set_Language } from '../../utils/i18n_utils';
 import { F_Transition_Theme } from '../../utils/theme_utils';
 import { Menu, X, LogOut, Globe, Moon, Sun } from 'lucide-react';
+import { F_Notification_Dropdown } from './notification_dropdown';
 
 interface Header_Props {
     p_is_authenticated?: boolean;
@@ -141,6 +142,9 @@ export const F_Header: React.FC<Header_Props> = ({
                             {F_Get_Text('nav.login')}
                         </Link>
                     )}
+
+                    {/* Notifications (Auth only) */}
+                    {p_is_authenticated && <F_Notification_Dropdown />}
 
                     {/* HAMBURGER MENU (Settings / Mobile) */}
                     {/* On Desktop: Shows dropdown with Language, Theme, Logout */}

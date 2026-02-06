@@ -91,7 +91,7 @@ export const F_Header: React.FC<Header_Props> = ({
     }, [is_menu_open]);
 
     return (
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${is_scrolled || p_is_authenticated
+        <header className={`fixed top-0 left-0 right-0 z-[999] transition-all duration-300 ${is_scrolled || p_is_authenticated
             ? 'bg-bg-light/90 dark:bg-bg-dark/90 backdrop-blur-md shadow-md'
             : 'bg-transparent'
             }`}>

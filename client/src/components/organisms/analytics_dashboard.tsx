@@ -8,8 +8,8 @@ import { F_Get_Text } from '../../utils/i18n_utils';
 const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> = {
     'gemini-2.0-flash': { rpd: 1500, desc: 'Primary SEO Model (Fast & Efficient)', label: 'Gemini 2.0 Flash' },
     'gemini-2.0-flash-exp': { rpd: 1500, desc: 'Experimental Features Fallback', label: 'Gemini 2.0 Flash Exp' },
-    'gemini-3.0-flash': { rpd: 1500, desc: 'High Efficiency Image Generation', label: 'Gemini 3.0 Flash' },
-    'gemini-3-flash': { rpd: 1500, desc: 'High Throughput Fallback', label: 'Gemini 3 Flash' },
+    'imagen-3': { rpd: 1500, desc: 'High Fidelity Image Generation', label: 'Imagen 3' },
+    'imagen-3-fast-001': { rpd: 1500, desc: 'Fast Image Fallback', label: 'Imagen 3 Fast' },
     'gemini-3-pro': { rpd: 50, desc: 'High Intelligence Reasoning', label: 'Gemini 3 Pro' },
     'gemini-1.5-pro': { rpd: 50, desc: 'Legacy Stable Model', label: 'Gemini 1.5 Pro' },
 };

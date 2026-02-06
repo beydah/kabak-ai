@@ -172,11 +172,12 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
             <div className="grid grid-cols-2 gap-4 mb-6">
                 {/* Front Photo */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-secondary ml-1">
+                    <label htmlFor="product_front_image" className="block text-sm font-medium text-secondary ml-1">
                         {F_Get_Text('new_product.upload.front')} <span className="text-primary">*</span>
                     </label>
                     <div className="h-48">
                         <F_File_Upload
+                            p_id="product_front_image"
                             p_label="" // Handled by outer label
                             p_file={front_file}
                             p_on_change={setFrontFileWithDraft}
@@ -187,11 +188,12 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
                 {/* Back Photo */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-medium text-secondary ml-1">
+                    <label htmlFor="product_back_image" className="block text-sm font-medium text-secondary ml-1">
                         {F_Get_Text('new_product.upload.back')} <span className="text-primary">*</span>
                     </label>
                     <div className="h-48">
                         <F_File_Upload
+                            p_id="product_back_image"
                             p_label=""
                             p_file={back_file}
                             p_on_change={setBackFileWithDraft}
@@ -208,10 +210,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 {/* Left Col */}
                 <div className="space-y-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="gender" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.gender')}
                         </label>
                         <select
+                            id="gender"
                             name="gender"
                             value={form_data.gender}
                             onChange={F_Handle_Change}
@@ -223,10 +226,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="body_type" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.body_type')}
                         </label>
                         <select
+                            id="body_type"
                             name="body_type"
                             value={form_data.body_type}
                             onChange={F_Handle_Change}
@@ -239,10 +243,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="background" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.background')}
                         </label>
                         <select
+                            id="background"
                             name="background"
                             value={form_data.background}
                             onChange={F_Handle_Change}
@@ -260,10 +265,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 {/* Right Col */}
                 <div className="space-y-4">
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="age" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.age')}
                         </label>
                         <input
+                            id="age"
                             type="number"
                             name="age"
                             min={10}
@@ -275,10 +281,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="fit" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.fit')}
                         </label>
                         <select
+                            id="fit"
                             name="fit"
                             value={form_data.fit}
                             onChange={F_Handle_Change}
@@ -291,10 +298,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                        <label htmlFor="accessory" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                             {F_Get_Text('new_product.labels.accessory')}
                         </label>
                         <select
+                            id="accessory"
                             name="accessory"
                             value={form_data.accessory}
                             onChange={F_Handle_Change}
@@ -312,10 +320,11 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
 
             {/* Description */}
             <div className="space-y-1">
-                <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                <label htmlFor="description" className="text-xs font-semibold text-secondary uppercase tracking-wider">
                     {F_Get_Text('new_product.labels.description')}
                 </label>
                 <textarea
+                    id="description"
                     name="description"
                     value={form_data.description}
                     onChange={F_Handle_Change}

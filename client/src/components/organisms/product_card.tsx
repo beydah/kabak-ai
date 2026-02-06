@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertCircle, XCircle } from 'lucide-react';
 import { I_Product_Data, F_Update_Product_Status, F_Delete_Product_By_Id } from '../../utils/storage_utils';
-import { useJobManager } from '../../components/providers/job_manager';
+import { useJobManager } from '../../context/JobContext';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 export interface Product_Card_Props {

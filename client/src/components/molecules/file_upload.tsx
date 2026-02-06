@@ -5,13 +5,14 @@ import { F_Get_Text } from '../../utils/i18n_utils';
 
 interface File_Upload_Props {
     p_label: string;
+    p_id?: string;
     p_file: File | null;
     p_on_change: (file: File | null) => void;
     p_preview_url?: string;
 }
 
 // Memoize removed to fix "Component is not a function" crash if caused by object return
-export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_on_change, p_preview_url }) => {
+export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_id, p_file, p_on_change, p_preview_url }) => {
     const [is_dragging, set_is_dragging] = useState(false);
     const [preview, set_preview] = useState<string | undefined>(p_preview_url);
     const input_ref = useRef<HTMLInputElement>(null);
@@ -90,6 +91,7 @@ export const F_File_Upload: React.FC<File_Upload_Props> = ({ p_label, p_file, p_
         `}
             >
                 <input
+                    id={p_id}
                     type="file"
                     ref={input_ref}
                     className="hidden"

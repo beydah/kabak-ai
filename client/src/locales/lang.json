@@ -235,13 +235,15 @@
         "common": {
             "loading": "Yükleniyor...",
             "error": "Bir hata oluştu.",
-            "success": "İşlem başarılı."
+            "success": "İşlem başarılı.",
+            "search_placeholder": "Ürünlerde ara..."
         },
         "notifications": {
             "title": "Bildirimler",
             "empty": "Yeni bildirim yok.",
             "clear_all": "Tümünü Temizle",
             "copy_all": "Tümünü Kopyala",
+            "copied": "Kopyalandı",
             "processing_failed": "İşlem Başarısız"
         },
         "analytics": {
@@ -518,13 +520,15 @@
         "common": {
             "loading": "Loading...",
             "error": "An error occurred.",
-            "success": "Success."
+            "success": "Success.",
+            "search_placeholder": "Search products..."
         },
         "notifications": {
             "title": "Notifications",
             "empty": "No new notifications.",
             "clear_all": "Clear All",
             "copy_all": "Copy All",
+            "copied": "Copied",
             "processing_failed": "Processing Failed"
         },
         "analytics": {

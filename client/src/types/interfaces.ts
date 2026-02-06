@@ -46,3 +46,42 @@ export interface I_Metric {
     usage_history: { date: string; count: number; cost: number }[]; // For daily/weekly views
     last_updated: number;
 }
+
+export enum Accessory {
+    NONE = 'Yok',
+    SUNGLASSES = 'Güneş Gözlüğü',
+    BAG = 'Çanta',
+    HAT = 'Şapka',
+    WATCH = 'Saat',
+    JEWELRY = 'Takı'
+}
+
+export enum BgOption {
+    STUDIO = 'Stüdyo',
+    URBAN = 'Şehir',
+    LUXURY_CAFE = 'Lüks Kafe',
+    ORANGE = 'Turuncu',
+    BLACK = 'Siyah',
+    MINIMALIST = 'Minimalist'
+}
+
+export interface ProductInput {
+    gender: 'Erkek' | 'Kadın';
+    age: string;
+    fit: string; // Vücut tipi
+    productFit: string; // Kesim
+    backgroundColor: BgOption;
+    accessory: Accessory;
+    frontImage: string; // Base64
+    backImage: string; // Base64
+}
+
+export interface ApiLog {
+    id: string;
+    timestamp: number;
+    task: 'image' | 'text' | 'video' | 'verify';
+    method: string;
+    status: 'success' | 'error';
+    message: string;
+    details?: any;
+}

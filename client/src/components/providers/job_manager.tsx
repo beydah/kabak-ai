@@ -8,20 +8,12 @@ import {
     F_Get_Error_Logs,
     F_Clear_Error_Logs,
     F_Remove_Error_Log,
-    F_Save_Product
+    F_Save_Product,
+    F_Delete_Product_By_Id
 } from '../../utils/storage_utils';
 import { F_Generate_SEO_Content } from '../../services/gemini_service';
 import { F_Get_Language } from '../../utils/i18n_utils';
-
-interface JobContextType {
-    error_logs: I_Error_Log[];
-    clear_logs: () => void;
-    remove_log: (id: string) => void;
-    refresh_logs: () => void;
-    cancel_job: (id: string) => Promise<void>;
-}
-
-const JobContext = createContext<JobContextType | undefined>(undefined);
+import { JobContext } from '../../context/JobContext';
 
 export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [error_logs, set_error_logs] = useState<I_Error_Log[]>([]);
@@ -31,8 +23,8 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     const cancel_job = async (id: string) => {
-        console.log(`[Job Manager] Cancelling job: ${id}`);
-        await F_Update_Product_Status(id, 'exited', "User Cancelled");
+        console.log(`[Job Manager] Cancelling (Deleting) job: ${id}`);
+        await F_Delete_Product_By_Id(id);
         refresh_logs();
     };
 
@@ -128,6 +120,37 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                     console.error(`[Job Manager] Job Failed:`, error);
                     const err_msg = error.message || "Unknown Gemini Error";
 
+                    let notify_title = "Job Failed";
+                    let notify_msg = err_msg;
+
+                    // MAPPING (User Specified)
+                    if (err_msg.includes("404")) {
+                        notify_title = "Engine Maintenance";
+                        notify_msg = "Image Engine (Imagen 3) unreachable. Falling back to placeholder.";
+                    } else if (err_msg.includes("SAFETY_FILTER_TRIGGERED") || err_msg.includes("IMAGEN_API_NO_IMAGE")) {
+                        notify_title = "Safety Filter";
+                        notify_msg = "Visual output restricted by safety filters. Adjusting description...";
+                    } else if (err_msg.includes("429") || err_msg.includes("Timeout")) {
+                        notify_title = "System Busy";
+                        notify_msg = "Upload too large or connection slow. Optimizing image...";
+                    }
+
+                    // CRITICAL VALIDATION FAILURE: Immediate Exit (No Retry)
+                    if (err_msg.includes("SAFETY_FILTER_TRIGGERED") || err_msg.includes("IMAGEN_API_NO_IMAGE") || err_msg.includes("404") || err_msg.includes("invalid/empty image") || err_msg.includes("Visual Engine maintenance") || err_msg.includes("Maintenance")) {
+                        console.error(`[Job Manager] Critical Failure for ${product.product_id}: ${err_msg}`);
+
+                        // Set status to exited immediately for these known terminal errors
+                        await F_Update_Product_Status(product.product_id, 'exited', `Exited: ${notify_title}`);
+
+                        F_Add_Error_Log({
+                            product_id: product.product_id,
+                            message: `${notify_title}: ${notify_msg}`
+                        });
+
+                        refresh_logs();
+                        return;
+                    }
+
                     // Increment Retry
                     const new_retry = (product.retry_count || 0) + 1;
 
@@ -172,12 +195,4 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             {children}
         </JobContext.Provider>
     );
-};
-
-export const useJobManager = () => {
-    const context = useContext(JobContext);
-    if (!context) {
-        throw new Error('useJobManager must be used within a F_Job_Provider');
-    }
-    return context;
 };

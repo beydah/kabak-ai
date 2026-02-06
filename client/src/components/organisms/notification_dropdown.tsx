@@ -1,20 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Bell, AlertCircle, Copy, Trash2 } from 'lucide-react';
-import { useJobManager } from '../providers/job_manager';
+import { useJobManager } from '../../context/JobContext';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 export const F_Notification_Dropdown: React.FC = () => {
     const { error_logs, clear_logs, remove_log } = useJobManager();
     const [show_notifications, set_show_notifications] = useState(false);
+    const [is_copied, set_is_copied] = useState(false);
+
+    const wrapper_ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const F_Handle_Click_Outside = (event: MouseEvent) => {
+            if (wrapper_ref.current && !wrapper_ref.current.contains(event.target as Node)) {
+                set_show_notifications(false);
+            }
+        };
+
+        if (show_notifications) {
+            document.addEventListener('mousedown', F_Handle_Click_Outside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', F_Handle_Click_Outside);
+        };
+    }, [show_notifications]);
 
     const F_Copy_To_Clipboard = (text: string) => {
         navigator.clipboard.writeText(text);
-        // Alert is native, but works. Could be replaced with toast later.
-        alert("Copied!");
+        set_is_copied(true);
+        setTimeout(() => set_is_copied(false), 1000);
     };
 
     return (
-        <div className="relative">
+        <div className="relative" ref={wrapper_ref}>
             <button
                 onClick={() => set_show_notifications(!show_notifications)}
                 className="p-2 hover:bg-secondary/10 rounded-full transition-colors relative"
@@ -27,16 +46,17 @@ export const F_Notification_Dropdown: React.FC = () => {
 
             {/* Notification Popover */}
             {show_notifications && (
-                <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-bg-dark border border-secondary/20 rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-2">
+                <div className="absolute right-0 top-full mt-2 w-80 md:w-96 bg-white dark:bg-bg-dark border border-secondary/20 rounded-xl shadow-xl z-[1000] overflow-hidden animate-in fade-in slide-in-from-top-2">
                     <div className="p-3 border-b border-secondary/20 flex items-center justify-between bg-secondary/5">
                         <h3 className="font-semibold text-sm">{F_Get_Text('notifications.title')}</h3>
                         {error_logs.length > 0 && (
                             <div className="flex gap-2">
                                 <button
                                     onClick={() => F_Copy_To_Clipboard(JSON.stringify(error_logs, null, 2))}
-                                    className="text-xs text-primary hover:underline"
+                                    className={`text-xs hover:underline ${is_copied ? "text-green-500 font-bold" : "text-primary"}`}
+                                    disabled={is_copied}
                                 >
-                                    {F_Get_Text('notifications.copy_all')}
+                                    {is_copied ? F_Get_Text('notifications.copied') : F_Get_Text('notifications.copy_all')}
                                 </button>
                                 <button
                                     onClick={clear_logs}
@@ -90,13 +110,6 @@ export const F_Notification_Dropdown: React.FC = () => {
                 </div>
             )}
 
-            {/* Click overlay */}
-            {show_notifications && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => set_show_notifications(false)}
-                />
-            )}
         </div>
     );
 };

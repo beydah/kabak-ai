@@ -107,6 +107,10 @@ export const F_New_Product_Page: React.FC = () => {
             // 3. Clear Draft
             F_Clear_Draft();
 
+            // 3b. Clear Draft Images (Explicit Cleanup)
+            localStorage.removeItem('kabak_draft_img_front');
+            localStorage.removeItem('kabak_draft_img_back');
+
             navigate('/collection');
 
         } catch (error) {

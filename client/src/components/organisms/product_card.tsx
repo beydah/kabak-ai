@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
+import { RotateCcw, Trash2, ChevronLeft, ChevronRight, AlertCircle, XCircle } from 'lucide-react';
 import { I_Product_Data, F_Update_Product_Status, F_Delete_Product_By_Id } from '../../utils/storage_utils';
 import { useJobManager } from '../../components/providers/job_manager';
 import { F_Get_Text } from '../../utils/i18n_utils';
@@ -17,7 +17,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
     // We only need front/back if we treat "Model" as the new "Front"
     const [current_view, set_current_view] = useState<'front' | 'back'>('front');
     const [show_delete_confirm, set_show_delete_confirm] = useState(false);
-    const { remove_log } = useJobManager();
+    const { remove_log, cancel_job } = useJobManager();
 
     const has_back_image = !!p_product.raw_back;
     const is_running = p_product.status === 'running';
@@ -102,11 +102,31 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
 
                     {/* RUNNING STATE - Shimmer Animation */}
                     {is_running && (
-                        <div className="absolute inset-0 z-20 pointer-events-none">
+                        <div className="absolute inset-0 z-20 pointer-events-auto flex items-center justify-center">
+
+                            {/* CANCEL BUTTON (Top Right) */}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (window.confirm(F_Get_Text('product.confirm_cancel') || "Cancel Job?")) {
+                                        cancel_job(p_product.product_id);
+                                    }
+                                }}
+                                className="absolute top-2 right-2 z-30 text-white/40 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-black/20"
+                                title="Cancel Job"
+                            >
+                                <XCircle size={22} />
+                            </button>
+
                             {/* Shimmer Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-x-full animate-shimmer" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
                             {/* Pulse Overlay */}
-                            <div className="absolute inset-0 bg-orange-500/10 animate-pulse" />
+                            <div className="absolute inset-0 bg-orange-500/10 animate-pulse pointer-events-none" />
+
+                            {/* Status Text (Previously separate or implicit?) */}
+                            {/* If user wanted "Generating Image..." status displayed centrally, we can add it here too if needed. 
+                                Product Card line 160 handles text, but overlay covers image.
+                            */}
                         </div>
                     )}
 

@@ -18,6 +18,7 @@ interface JobContextType {
     clear_logs: () => void;
     remove_log: (id: string) => void;
     refresh_logs: () => void;
+    cancel_job: (id: string) => Promise<void>;
 }
 
 const JobContext = createContext<JobContextType | undefined>(undefined);
@@ -27,6 +28,12 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
     const refresh_logs = async () => {
         set_error_logs(await F_Get_Error_Logs());
+    };
+
+    const cancel_job = async (id: string) => {
+        console.log(`[Job Manager] Cancelling job: ${id}`);
+        await F_Update_Product_Status(id, 'exited', "User Cancelled");
+        refresh_logs();
     };
 
     useEffect(() => {
@@ -40,6 +47,14 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             const running_products = products.filter(p => p.status === 'running');
 
             running_products.forEach(async (product) => {
+                // TIMEOUT GUARD (5 Minutes = 300,000ms)
+                const TIMEOUT_MS = 300000;
+                if (Date.now() - product.created_at > TIMEOUT_MS) {
+                    console.warn(`[Job Manager] System Timeout for ${product.product_id}`);
+                    await F_Update_Product_Status(product.product_id, 'exited', "System Timeout: 5 Minutes");
+                    return;
+                }
+
                 // Retry Guard
                 if ((product.retry_count || 0) >= 3) {
                     console.warn(`[Job Manager] Max retries reached for ${product.product_id}. Exiting.`);
@@ -74,6 +89,15 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                     // STEP 2: Generate Image
                     if (!product.model_front) {
+                        console.log(`[Job Manager] Status Change: Generating Image for ${product.product_id}...`);
+
+                        // Notify UI of detailed status (via error_log field as status message for now)
+                        // This allows the "Processing" badge to potentially show "Generating Image..." if UI checks this.
+                        if (product.error_log !== "Generating Image...") {
+                            product.error_log = "Generating Image...";
+                            await F_Save_Product(product);
+                        }
+
                         const { F_Generate_Model_Image } = await import('../../services/gemini_service');
                         const image_base64 = await F_Generate_Model_Image(product);
 
@@ -81,10 +105,18 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                             throw new Error("Image Generation Failed (Empty Response)");
                         }
 
+                        // ECHO GUARD: Prevent storing raw input as result
+                        if (image_base64 === product.raw_front) {
+                            // Simulation placeholder bypass (Check Step 2523 implementation of F_Generate_Model_Image returns a specific 1x1 pixel)
+                            // If it returns the 1x1 pixel, it is NOT equal to raw full raw_front.
+                            // So this guard is safe for real failures.
+                            throw new Error("Image Generation Failed (Returned Input)");
+                        }
+
                         await F_Update_Product_Status(
                             product.product_id,
                             'finished',
-                            undefined, // No error
+                            undefined, // Clear error/status msg
                             undefined, // Keep title
                             undefined, // Keep desc
                             image_base64
@@ -136,7 +168,7 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
     };
 
     return (
-        <JobContext.Provider value={{ error_logs, clear_logs, remove_log, refresh_logs }}>
+        <JobContext.Provider value={{ error_logs, clear_logs, remove_log, refresh_logs, cancel_job }}>
             {children}
         </JobContext.Provider>
     );

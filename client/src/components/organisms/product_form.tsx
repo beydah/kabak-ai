@@ -4,6 +4,10 @@ import { F_File_Upload } from '../../components/molecules/file_upload';
 import { I_Product_Data } from '../../utils/storage_utils';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { v4 as uuidv4 } from 'uuid';
+import { F_File_To_Base64 } from '../../utils/file_utils';
+
+const DRAFT_IMG_FRONT = 'kabak_draft_img_front';
+const DRAFT_IMG_BACK = 'kabak_draft_img_back';
 
 interface Product_Form_Props {
     p_initial_data?: Partial<I_Product_Data>;
@@ -26,7 +30,60 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     const [front_file, set_front_file] = useState<File | null>(null);
     const [back_file, set_back_file] = useState<File | null>(null);
 
-    // State for form data
+    // DRAFT IMAGE PRESISTENCE - Load on Mount
+    useEffect(() => {
+        const loadDraftImages = async () => {
+            try {
+                // Front Image
+                const frontB64 = localStorage.getItem(DRAFT_IMG_FRONT);
+                if (frontB64 && !p_initial_data?.raw_front) {
+                    const res = await fetch(frontB64);
+                    const blob = await res.blob();
+                    const file = new File([blob], "draft_front.png", { type: "image/png" });
+                    set_front_file(file);
+                }
+
+                // Back Image
+                const backB64 = localStorage.getItem(DRAFT_IMG_BACK);
+                if (backB64 && !p_initial_data?.raw_back) {
+                    const res = await fetch(backB64);
+                    const blob = await res.blob();
+                    const file = new File([blob], "draft_back.png", { type: "image/png" });
+                    set_back_file(file);
+                }
+            } catch (e) {
+                console.error("Failed to load draft images", e);
+            }
+        };
+        loadDraftImages();
+    }, [p_initial_data]); // Dep on p_initial_data to ensure we don't overwrite if initial data comes in late? Maybe [] is safer.
+
+    // PROXY SETTERS FOR DRAFT SAVING
+    const setFrontFileWithDraft = async (file: File | null) => {
+        set_front_file(file);
+        if (file) {
+            try {
+                const b64 = await F_File_To_Base64(file);
+                localStorage.setItem(DRAFT_IMG_FRONT, b64);
+            } catch (e) { console.error("Draft save failed", e); }
+        } else {
+            localStorage.removeItem(DRAFT_IMG_FRONT);
+        }
+    };
+
+    const setBackFileWithDraft = async (file: File | null) => {
+        set_back_file(file);
+        if (file) {
+            try {
+                const b64 = await F_File_To_Base64(file);
+                localStorage.setItem(DRAFT_IMG_BACK, b64);
+            } catch (e) { console.error("Draft save failed", e); }
+        } else {
+            localStorage.removeItem(DRAFT_IMG_BACK);
+        }
+    };
+
+
     // State for form data
     const [form_data, set_form_data] = useState({
         gender: p_initial_data?.gender === false ? 'male' : 'female', // Default female (true)
@@ -47,6 +104,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 fit: p_initial_data.kesim || 'regular',
                 background: p_initial_data.background || 'orange',
                 accessory: p_initial_data.aksesuar || 'none',
+                // Keep existing values if p_initial_data key is missing but we have defaults
                 age: p_initial_data.age || '30',
                 description: p_initial_data.raw_desc || ''
             }));
@@ -69,31 +127,9 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         }
     }, [form_data, p_on_change]);
 
-    // Sync form_data changes to parent (for draft)
-    useEffect(() => {
-        if (p_on_change) {
-            const partial_data: Partial<I_Product_Data> = {
-                gender: form_data.gender === 'female',
-                age: form_data.age,
-                vücut_tipi: form_data.body_type,
-                kesim: form_data.fit,
-                background: form_data.background,
-                aksesuar: form_data.accessory,
-                raw_desc: form_data.description
-            };
-            p_on_change(partial_data);
-        }
-    }, [form_data, p_on_change]);
-
     const F_Handle_Change = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         set_form_data(prev => ({ ...prev, [name]: value }));
-    };
-
-    const F_Rename_File = (file: File, type: 'front' | 'back', productId: string): File => {
-        const extension = file.name.split('.').pop();
-        const newName = `${type}_raw_${productId}.${extension}`;
-        return new File([file], newName, { type: file.type });
     };
 
     const F_Handle_Submit = async (e: React.FormEvent) => {
@@ -115,10 +151,6 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
             return;
         }
 
-        // Map form data back to schema-compatible object if needed by parent,
-        // OR parent handles it. `p_on_submit` takes `Partial<I_Product_Data>`.
-        // But `form_data` here has english keys.
-        // I will map it here to be safe and clean.
         const submit_data: Partial<I_Product_Data> = {
             gender: form_data.gender === 'female', // true if female
             age: form_data.age.toString(),
@@ -147,7 +179,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                         <F_File_Upload
                             p_label="" // Handled by outer label
                             p_file={front_file}
-                            p_on_change={set_front_file}
+                            p_on_change={setFrontFileWithDraft}
                             p_preview_url={p_initial_data?.raw_front}
                         />
                     </div>
@@ -162,7 +194,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                         <F_File_Upload
                             p_label=""
                             p_file={back_file}
-                            p_on_change={set_back_file}
+                            p_on_change={setBackFileWithDraft}
                             p_preview_url={p_initial_data?.raw_back}
                         />
                     </div>

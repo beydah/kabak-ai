@@ -36,7 +36,7 @@ export const F_Modal: React.FC<Modal_Props> = ({ p_is_open, p_on_close, p_title,
     if (!render) return null;
 
     return (
-        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className={`fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`} onClick={p_on_close}>
             <div
                 className={`bg-white dark:bg-[#0A0A0A] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto flex flex-col relative transition-all duration-300 transform ${visible ? 'scale-100 translate-y-0 opacity-100' : 'scale-95 translate-y-4 opacity-0'}`}
                 onClick={(e) => e.stopPropagation()}

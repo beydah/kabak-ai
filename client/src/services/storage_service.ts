@@ -1,7 +1,7 @@
 import { I_Product_Data, I_Error_Log, I_Metric } from '../types/interfaces';
 
 const DB_NAME = 'KabakAI_DB';
-const DB_VERSION = 2; // Increment version to trigger upgrade
+const DB_VERSION = 3; // Increment version to trigger upgrade
 const STORE_PRODUCTS = 'products';
 const STORE_LOGS = 'error_logs';
 const STORE_METRICS = 'metrics';
@@ -23,12 +23,13 @@ class StorageService {
 
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
-                if (!db.objectStoreNames.contains(STORE_PRODUCTS)) {
-                    db.createObjectStore(STORE_PRODUCTS, { keyPath: 'id' });
-                }
-                const STORE_METRICS = 'metrics';
 
-                // ... (Inside onupgradeneeded)
+                // MIGRATION V3: Switch to 'product_id'
+                if (db.objectStoreNames.contains(STORE_PRODUCTS)) {
+                    db.deleteObjectStore(STORE_PRODUCTS);
+                }
+                db.createObjectStore(STORE_PRODUCTS, { keyPath: 'product_id' });
+
                 if (!db.objectStoreNames.contains(STORE_LOGS)) {
                     db.createObjectStore(STORE_LOGS, { keyPath: 'id' });
                 }
@@ -123,8 +124,20 @@ class StorageService {
         return this.getById<I_Product_Data>(STORE_PRODUCTS, id);
     }
 
-    async saveProduct(product: I_Product_Data): Promise<void> {
-        await this.put(STORE_PRODUCTS, product);
+    async saveProduct(product: Partial<I_Product_Data>): Promise<void> {
+        // 1. Ensure product_id exists. Never trust the caller to provide it.
+        const verifiedProduct = {
+            ...product,
+            product_id: product.product_id || crypto.randomUUID(), // Create ID if missing
+            update_at: Date.now()
+        } as I_Product_Data;
+
+        // 2. Validate against schema
+        if (!verifiedProduct.product_id) {
+            throw new Error("Critical: Failed to generate product_id");
+        }
+
+        await this.put(STORE_PRODUCTS, verifiedProduct);
     }
 
     async deleteProduct(id: string): Promise<void> {
@@ -187,4 +200,5 @@ class StorageService {
     }
 }
 
+// Initialized on import in storage_utils.ts
 export const DB_Service = new StorageService();

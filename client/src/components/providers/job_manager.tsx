@@ -7,7 +7,8 @@ import {
     I_Error_Log,
     F_Get_Error_Logs,
     F_Clear_Error_Logs,
-    F_Remove_Error_Log
+    F_Remove_Error_Log,
+    F_Save_Product
 } from '../../utils/storage_utils';
 import { F_Generate_SEO_Content } from '../../services/gemini_service';
 import { F_Get_Language } from '../../utils/i18n_utils';
@@ -39,36 +40,83 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             const running_products = products.filter(p => p.status === 'running');
 
             running_products.forEach(async (product) => {
+                // Retry Guard
+                if ((product.retry_count || 0) >= 3) {
+                    console.warn(`[Job Manager] Max retries reached for ${product.product_id}. Exiting.`);
+                    // We must force 'exited' status and save. 
+                    // F_Update_Product_Status handles standard updates, but we need to ensure it's saved as exited.
+                    if (product.status !== 'exited') {
+                        await F_Update_Product_Status(product.product_id, 'exited', "Max Retries Exceeded");
+                    }
+                    return;
+                }
+
                 try {
-                    console.log(`[Job Manager] Processing: ${product.id}`);
+                    console.log(`[Job Manager] Processing: ${product.product_id} (Attempt ${(product.retry_count || 0) + 1})`);
 
                     // Call Gemini API
-                    const lang = F_Get_Language(); // Use current app language context? Or store lang in product? 
-                    // ideally store lang in product to be robust, but for now app lang.
+                    const lang = F_Get_Language();
 
-                    const result = await F_Generate_SEO_Content(product, lang as 'tr' | 'en');
+                    // STEP 1: Generate Text (SEO Content)
+                    if (!product.product_title || !product.product_desc) {
+                        const result = await F_Generate_SEO_Content(product, lang as 'tr' | 'en');
 
-                    // Success
-                    F_Update_Product_Status(
-                        product.id,
-                        'finished',
-                        undefined,
-                        result.title,
-                        result.description
-                    );
+                        await F_Update_Product_Status(
+                            product.product_id,
+                            'running',
+                            undefined,
+                            result.title,
+                            result.description
+                        );
+                        console.log(`[Job Manager] Text Generated for: ${product.product_id}`);
+                        return;
+                    }
+
+                    // STEP 2: Generate Image
+                    if (!product.model_front) {
+                        const { F_Generate_Model_Image } = await import('../../services/gemini_service');
+                        const image_base64 = await F_Generate_Model_Image(product);
+
+                        if (!image_base64) {
+                            throw new Error("Image Generation Failed (Empty Response)");
+                        }
+
+                        await F_Update_Product_Status(
+                            product.product_id,
+                            'finished',
+                            undefined, // No error
+                            undefined, // Keep title
+                            undefined, // Keep desc
+                            image_base64
+                        );
+                        console.log(`[Job Manager] Image Generated and Job Finished for: ${product.product_id}`);
+                    }
 
                 } catch (error: any) {
                     console.error(`[Job Manager] Job Failed:`, error);
-
-                    // Fail
                     const err_msg = error.message || "Unknown Gemini Error";
-                    F_Update_Product_Status(product.id, 'exited', err_msg);
 
-                    // Log
-                    F_Add_Error_Log({
-                        product_id: product.id,
-                        message: `Processing Failed: ${err_msg}`
-                    });
+                    // Increment Retry
+                    const new_retry = (product.retry_count || 0) + 1;
+
+                    // We need to persist this retry count.
+                    // Since F_Update_Product_Status refreshes from DB, we should update the DB with new retry count.
+                    // But F_Update_Product_Status doesn't expose retry_count arg.
+                    // So we must manually save the product with updated retry_count.
+                    // We need F_Save_Product.
+                    product.retry_count = new_retry;
+                    product.error_log = `Retry ${new_retry}: ${err_msg}`;
+
+                    if (new_retry >= 3) {
+                        product.status = 'exited';
+                        product.error_log = `Max Retries Exceeded: ${err_msg}`;
+                        F_Add_Error_Log({
+                            product_id: product.product_id,
+                            message: `Job Exited: ${err_msg}`
+                        });
+                    }
+
+                    await F_Save_Product(product);
                     refresh_logs();
                 }
             });

@@ -35,30 +35,68 @@ export const F_New_Product_Page: React.FC = () => {
     // Let's pass `p_on_draft_update` to ProductForm.
 
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
-        if (!p_front_file && !p_data.front_image) {
+        if (!p_front_file && !p_data.raw_front) {
             alert("Please upload a front photo."); // Should be handled by form validation now
             return;
         }
 
         try {
-            const front_b64 = p_front_file ? await F_File_To_Base64(p_front_file) : (p_data.front_image || '');
-            const back_b64 = p_back_file ? await F_File_To_Base64(p_back_file) : (p_data.back_image || '');
+            const front_b64 = p_front_file ? await F_File_To_Base64(p_front_file) : (p_data.raw_front || '');
+            const back_b64 = p_back_file ? await F_File_To_Base64(p_back_file) : (p_data.raw_back || '');
+
+            // SMART DEFAULTS & LOGIC
+            const cookies = F_Get_Product_Preferences();
+
+            // Gender Logic: Prefer Form Data -> Cookie -> Default (Female/True)
+            let final_gender = true; // Default
+
+            if (p_data.gender !== undefined) {
+                final_gender = p_data.gender;
+            } else if (cookies.gender !== undefined) {
+                // Cookies store as string "true"/"false"
+                final_gender = String(cookies.gender) === 'true';
+            }
 
             // Ensure all required fields for I_Product_Data are present
             const new_product: I_Product_Data = {
-                id: uuidv4(),
+                product_id: uuidv4(),
                 created_at: Date.now(),
-                front_image: front_b64,
-                back_image: back_b64,
-                gender: p_data.gender || 'female',
-                body_type: p_data.body_type || 'average',
-                fit: p_data.fit || 'regular',
-                background: p_data.background || 'orange',
-                accessory: p_data.accessory || 'glasses',
-                age: p_data.age || 30,
-                description: p_data.description || '',
-                status: 'running' // Set to RUNNING
+                update_at: Date.now(),
+                raw_front: front_b64,
+                raw_back: back_b64,
+
+                // Strict Gender
+                gender: final_gender,
+
+                // Smart Fallbacks
+                // p_data uses Interface Keys (Turkish/Mixed), Cookies use English aliases
+                age: p_data.age || cookies.age || '30',
+                vücut_tipi: p_data.vücut_tipi || cookies.body_type || 'average',
+                kesim: p_data.kesim || cookies.fit || 'regular',
+                background: p_data.background || cookies.background || 'orange',
+                aksesuar: p_data.aksesuar || cookies.accessory || 'none',
+
+                raw_desc: p_data.raw_desc || '',
+                status: 'running',
+                retry_count: 0
             };
+
+            // VALIDATION: Ensure Data Integrity
+            if (!new_product.product_id) throw new Error("ID Generation Failed");
+            if (new_product.gender === undefined) new_product.gender = true; // Final safety net
+
+            // PAYLOAD DEBUG (User Request)
+            console.log("--------------- SUBMISSION PAYLOAD ---------------");
+            console.table({
+                id: new_product.product_id,
+                gender_bool: new_product.gender,
+                gender_text: new_product.gender !== false ? 'FEMALE' : 'MALE',
+                age: new_product.age,
+                body: new_product.vücut_tipi,
+                fit: new_product.kesim,
+                desc: new_product.raw_desc
+            });
+            console.log("--------------------------------------------------");
 
             // 1. Save Product
             await F_Save_Product(new_product);

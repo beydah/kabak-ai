@@ -22,12 +22,12 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
         try {
             // Keep existing images if no new file is uploaded
-            let front_b64 = p_product.front_image;
+            let front_b64 = p_product.raw_front;
             if (p_front_file) {
                 front_b64 = await F_File_To_Base64(p_front_file);
             }
 
-            let back_b64 = p_product.back_image;
+            let back_b64 = p_product.raw_back;
             if (p_back_file) {
                 back_b64 = await F_File_To_Base64(p_back_file);
             }
@@ -35,8 +35,9 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
             const updated_product: I_Product_Data = {
                 ...p_product,
                 ...p_data,
-                front_image: front_b64,
-                back_image: back_b64
+                raw_front: front_b64,
+                raw_back: back_b64,
+                update_at: Date.now()
             };
 
             // Update in DB (Async)

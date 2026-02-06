@@ -47,4 +47,10 @@ export const app_router = createBrowserRouter([
             </F_Auth_Guard>
         ),
     },
-]);
+], {
+    // @ts-ignore
+    future: {
+        v7_startTransition: true,
+        v7_relativeSplatPath: true,
+    },
+});

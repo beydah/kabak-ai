@@ -12,11 +12,14 @@ export interface Product_Card_Props {
 }
 
 export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navigate, p_on_download, p_on_refresh }) => {
+    // Default to 'model' view if generated image exists, otherwise 'front'
+    // State for image switcher
+    // We only need front/back if we treat "Model" as the new "Front"
     const [current_view, set_current_view] = useState<'front' | 'back'>('front');
     const [show_delete_confirm, set_show_delete_confirm] = useState(false);
     const { remove_log } = useJobManager();
 
-    const has_back_image = !!p_product.back_image;
+    const has_back_image = !!p_product.raw_back;
     const is_running = p_product.status === 'running';
     const is_exited = p_product.status === 'exited';
 
@@ -27,9 +30,11 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
         }
     };
 
+    // ... (Handlers unchanged) ...
+
     const F_Handle_Retry = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        await F_Update_Product_Status(p_product.id, 'running', undefined);
+        await F_Update_Product_Status(p_product.product_id, 'running', undefined);
         p_on_refresh();
     };
 
@@ -40,7 +45,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
 
     const F_Confirm_Delete = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        await F_Delete_Product_By_Id(p_product.id);
+        await F_Delete_Product_By_Id(p_product.product_id);
         set_show_delete_confirm(false);
         p_on_refresh();
     };
@@ -50,12 +55,16 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
         set_show_delete_confirm(false);
     };
 
-    const display_image = current_view === 'front' ? p_product.front_image : p_product.back_image;
+    // Display Logic: 
+    // If View is Front AND Generated Image exists -> Show Generated (Priority 1)
+    // Else -> Show Raw Front (Priority 2)
+    const display_front = p_product.model_front || p_product.raw_front;
+    const display_image = current_view === 'front' ? display_front : p_product.raw_back;
 
     return (
         <>
             <div
-                onClick={() => !is_exited && !is_running && p_navigate(`/product/${p_product.id}`)}
+                onClick={() => !is_exited && !is_running && p_navigate(`/product/${p_product.product_id}`)}
                 className={`
                     bg-white dark:bg-bg-dark rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-secondary/20 group relative
                     ${(is_running || is_exited) ? '' : ''} 
@@ -64,9 +73,9 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                 {/* Image Container */}
                 <div className={`aspect-[3/4] bg-secondary/10 relative overflow-hidden`}>
 
-                    {/* Front Image */}
+                    {/* Front View (Raw or AI Model) */}
                     <img
-                        src={p_product.front_image}
+                        src={display_image}
                         alt="front"
                         className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                             ${current_view === 'front' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
@@ -78,7 +87,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                     {/* Back Image (if exists) */}
                     {has_back_image && (
                         <img
-                            src={p_product.back_image}
+                            src={p_product.raw_back}
                             alt="back"
                             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                                 ${current_view === 'back' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
@@ -87,6 +96,9 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                             `}
                         />
                     )}
+
+                    {/* AI Badge (Only if Front View & Has AI) */}
+                    {/* Badge Removed per Task 2053 */}
 
                     {/* RUNNING STATE - Shimmer Animation */}
                     {is_running && (
@@ -118,9 +130,10 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                         </div>
                     )}
 
-                    {/* NORMAL STATE (Buttons) */}
+                    {/* NORMAL STATE (Buttons & Toggle) */}
                     {!is_running && !is_exited && (
                         <>
+                            {/* View Navigation (Left/Right) */}
                             {has_back_image && (
                                 <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                                     <button
@@ -144,14 +157,14 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                 {/* Content */}
                 <div className="p-4 relative">
                     <p className="font-medium text-text-light dark:text-text-dark truncate">
-                        {p_product.generated_title || `ID: ${p_product.id.substring(0, 8)}...`}
+                        {is_running ? "Generating..." : (p_product.product_title || `ID: ${(p_product.product_id || "").substring(0, 8)}...`)}
                     </p>
                     <p className="text-sm text-secondary truncate mt-1">
-                        {p_product.generated_description || p_product.description || 'No description'}
+                        {is_running ? "Optimizing content..." : (p_product.product_desc || p_product.raw_desc || 'No description').substring(0, 80)}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-secondary/60">
-                            {new Date(p_product.created_at).toLocaleDateString()}
+                            {p_product.created_at ? new Date(p_product.created_at).toLocaleDateString() : 'Just now'}
                         </p>
                     </div>
                 </div>

@@ -1,21 +1,34 @@
 export type ProductStatus = 'draft' | 'running' | 'finished' | 'exited';
 
 export interface I_Product_Data {
-    id: string;
-    created_at: number;
-    front_image: string;
-    back_image: string;
-    gender: string;
-    age: number;
-    body_type: string;
-    fit: string;
+    product_id: string; // Unique UUID
+
+    // Images (Base64/Blob)
+    raw_front: string;
+    raw_back: string;
+    model_front?: string; // AI Generated result
+    model_back?: string;  // Placeholder
+    model_video?: string; // Placeholder
+
+    // AI Content
+    product_title?: string;
+    product_desc?: string;
+
+    // Attributes
+    gender: boolean; // true = Female, false = Male (Assumption based on fashion default)
+    age: string;     // User input
+    vücut_tipi: string; // body_type
+    kesim: string;      // fit
     background: string;
-    accessory: string;
-    description: string;
-    // New Fields
+    aksesuar: string;   // accessory
+
+    raw_desc: string; // Original user input text
+
+    // Metadata
+    update_at: number;
+    created_at: number; // Keeping for sort
     status: ProductStatus;
-    generated_title?: string;
-    generated_description?: string;
+    retry_count?: number;
     error_log?: string;
 }
 

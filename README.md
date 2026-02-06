@@ -85,71 +85,44 @@ Based on the provided information, the system generates:
 
 ## 🧩 Technologies Used
 
+### Core
+* **Google Gemini 3.0 / 2.0** (AI Intelligence)
+* **Imagen 4.0** (Image Generation)
+* **Veo 2** (Video Generation)
+
 ### Frontend
+* **React** (UI Framework)
+* **Vite** (Build Tool)
+* **Tailwind CSS** (Styling)
 
-* **React**
-* **Vite**
-* **Tailwind CSS**
-
-### Backend
-
-* **Node.js**
-
-### State & Preferences
-
-* **Local Storage**
-  * Language preference
-  * Theme (light / dark)
-  * User settings
+### Storage
+* **IndexedDB** (High-capacity Client-side Storage)
+* **Local Storage** (Preferences)
 
 ---
 
-## 🎨 UI & UX Approach
+## 🛠️ Installation & Setup
 
-* Mobile-first design
-* Atomic Design principles
-* Light / Dark theme support
-* Non-repetitive, scalable component architecture
+### Prerequisites
+* Node.js (v18+)
+* npm or yarn
 
----
+### Quick Start
 
-# Clone the repository
+```bash
+# 1. Clone the repository
 git clone https://github.com/beydah/kabak-ai.git
 cd kabak-ai
 
-# Install dependencies
+# 2. Install dependencies
 npm install
 
-# Run the client (development)
-npm run dev:client
+# 3. Environment Configuration
+# Create a .env file and add your Google Gemini API key
+# REACT_APP_GEMINI_API_KEY=your_key_here
 
-# Run the server (development)
-npm run dev:server
-```
-
----
-
-## 📁 Project Structure
-
-```
-kabak-ai/
-├── client/                 # React + Vite frontend
-│   ├── src/
-│   │   ├── components/     # Atomic Design components
-│   │   │   ├── atoms/      # Basic UI elements
-│   │   │   ├── molecules/  # Composite components
-│   │   │   ├── organisms/  # Complex sections
-│   │   │   └── templates/  # Page layouts
-│   │   ├── pages/          # Route pages
-│   │   ├── locales/        # i18n translations (TR/EN)
-│   │   ├── utils/          # Helper functions
-│   │   └── routes/         # Router configuration
-├── server/                 # Node.js backend
-│   └── src/
-│       ├── controllers/
-│       ├── services/
-│       └── routes/
-└── shared/                 # Shared types & constants
+# 4. Run the Client
+npm run client
 ```
 
 ---

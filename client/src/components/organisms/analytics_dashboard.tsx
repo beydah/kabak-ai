@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Info, AlertTriangle } from 'lucide-react';
-import { F_Get_All_Metrics, I_Metric, F_Subscribe_To_Updates } from '../../utils/storage_utils';
+import { F_Get_All_Metrics, I_Metric, F_Subscribe_To_Updates, F_Get_Preference, F_Set_Preference } from '../../utils/storage_utils';
+import { F_Get_Exchange_Rate, F_Convert_Currency } from '../../services/currency_service';
 import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> = {
     'gemini-2.0-flash': { rpd: 1500, desc: 'Primary SEO Model (Fast & Efficient)', label: 'Gemini 2.0 Flash' },
     'gemini-2.0-flash-exp': { rpd: 1500, desc: 'Experimental Features Fallback', label: 'Gemini 2.0 Flash Exp' },
+    'gemini-3.0-flash': { rpd: 1500, desc: 'High Efficiency Image Generation', label: 'Gemini 3.0 Flash' },
     'gemini-3-flash': { rpd: 1500, desc: 'High Throughput Fallback', label: 'Gemini 3 Flash' },
     'gemini-3-pro': { rpd: 50, desc: 'High Intelligence Reasoning', label: 'Gemini 3 Pro' },
     'gemini-1.5-pro': { rpd: 50, desc: 'Legacy Stable Model', label: 'Gemini 1.5 Pro' },
@@ -15,13 +17,29 @@ const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> =
 export const F_Analytics_Dashboard: React.FC = () => {
     const [metrics, set_metrics] = useState<I_Metric[]>([]);
     const [view_mode, set_view_mode] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+    const [currency, set_currency] = useState<'USD' | 'TRY'>('USD');
+    const [exchange_rate, set_exchange_rate] = useState<number>(35);
 
     useEffect(() => {
         F_Load_Metrics();
+        F_Init_Currency();
         // Subscribe to cross-tab updates
         const unsubscribe = F_Subscribe_To_Updates(F_Load_Metrics);
         return () => unsubscribe();
     }, []);
+
+    const F_Init_Currency = async () => {
+        const pref = F_Get_Preference('app_currency');
+        if (pref === 'TRY') set_currency('TRY');
+        const rate = await F_Get_Exchange_Rate();
+        set_exchange_rate(rate);
+    };
+
+    const F_Toggle_Currency = () => {
+        const new_curr = currency === 'USD' ? 'TRY' : 'USD';
+        set_currency(new_curr);
+        F_Set_Preference('app_currency', new_curr);
+    };
 
     const F_Load_Metrics = async () => {
         const data = await F_Get_All_Metrics();
@@ -77,19 +95,30 @@ export const F_Analytics_Dashboard: React.FC = () => {
                 </F_Text>
 
                 {/* Filters */}
-                <div className="flex bg-secondary/10 p-1 rounded-lg">
-                    {['daily', 'weekly', 'monthly'].map((m) => (
-                        <button
-                            key={m}
-                            onClick={() => set_view_mode(m as any)}
-                            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${view_mode === m
-                                ? 'bg-white dark:bg-bg-dark text-primary shadow-sm'
-                                : 'text-secondary hover:text-text-light dark:hover:text-text-dark'
-                                } capitalize`}
-                        >
-                            {F_Get_Text(`analytics.view_${m}`)}
-                        </button>
-                    ))}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={F_Toggle_Currency}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-bg-dark border border-secondary/20 text-primary shadow-sm hover:border-primary/50 transition-colors uppercase"
+                    >
+                        {currency}
+                    </button>
+
+                    <div className="w-px h-6 bg-secondary/20"></div>
+
+                    <div className="flex bg-secondary/10 p-1 rounded-lg">
+                        {['daily', 'weekly', 'monthly'].map((m) => (
+                            <button
+                                key={m}
+                                onClick={() => set_view_mode(m as any)}
+                                className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${view_mode === m
+                                    ? 'bg-white dark:bg-bg-dark text-primary shadow-sm'
+                                    : 'text-secondary hover:text-text-light dark:hover:text-text-dark'
+                                    } capitalize`}
+                            >
+                                {F_Get_Text(`analytics.view_${m}`)}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -162,10 +191,10 @@ export const F_Analytics_Dashboard: React.FC = () => {
                             <div className="pt-3 border-t border-secondary/10 flex justify-between items-center">
                                 <span className="text-xs text-secondary flex items-center gap-1">
                                     {F_Get_Text('analytics.estimated_cost')}
-                                    <span className="text-[10px] bg-secondary/10 px-1 rounded">USD</span>
+                                    <span className="text-[10px] bg-secondary/10 px-1 rounded">{currency}</span>
                                 </span>
                                 <span className="font-mono text-sm font-medium text-text-light dark:text-text-dark">
-                                    ${data.cost.toFixed(6)}
+                                    {F_Convert_Currency(data.cost, exchange_rate, currency)}
                                 </span>
                             </div>
                         </div>

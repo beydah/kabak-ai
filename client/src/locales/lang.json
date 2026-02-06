@@ -255,6 +255,31 @@
             "usage": "Kullanım",
             "limit_reached": "Günlük limit aşıldı!",
             "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!"
+        },
+        "filters": {
+            "search_placeholder": "Ürünlerde ara...",
+            "toggle": "Filtreler",
+            "clear": "Temizle",
+            "gender": {
+                "label": "Cinsiyet",
+                "all": "Tümü"
+            },
+            "status": {
+                "label": "Durum",
+                "all": "Tümü",
+                "finished": "Tamamlandı",
+                "running": "İşleniyor",
+                "exited": "Hata/İptal"
+            },
+            "age_range": {
+                "label": "Yaş Aralığı",
+                "all": "Tümü"
+            },
+            "sort": {
+                "label": "Sıralama",
+                "newest": "En Yeni",
+                "oldest": "En Eski"
+            }
         }
     },
     "en": {
@@ -513,6 +538,31 @@
             "usage": "Usage",
             "limit_reached": "Daily limit reached!",
             "empty_state": "No usage data recorded yet. Generate some products to see analytics!"
+        },
+        "filters": {
+            "search_placeholder": "Search products...",
+            "toggle": "Filters",
+            "clear": "Clear",
+            "gender": {
+                "label": "Gender",
+                "all": "All"
+            },
+            "status": {
+                "label": "Status",
+                "all": "All",
+                "finished": "Finished",
+                "running": "Running",
+                "exited": "Error/Exited"
+            },
+            "age_range": {
+                "label": "Age Range",
+                "all": "All"
+            },
+            "sort": {
+                "label": "Sort By",
+                "newest": "Newest First",
+                "oldest": "Oldest First"
+            }
         },
         "settings": {
             "title": "Settings",

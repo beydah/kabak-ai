@@ -27,30 +27,63 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
     const [back_file, set_back_file] = useState<File | null>(null);
 
     // State for form data
+    // State for form data
     const [form_data, set_form_data] = useState({
-        gender: p_initial_data?.gender || 'female',
-        age: p_initial_data?.age || 30,
-        body_type: p_initial_data?.body_type || 'average',
-        fit: p_initial_data?.fit || 'regular',
+        gender: p_initial_data?.gender === false ? 'male' : 'female', // Default female (true)
+        age: p_initial_data?.age || '30', // Age is string in new schema
+        body_type: p_initial_data?.vücut_tipi || 'average',
+        fit: p_initial_data?.kesim || 'regular',
         background: p_initial_data?.background || 'orange',
-        accessory: p_initial_data?.accessory || 'none',
-        description: p_initial_data?.description || '',
+        accessory: p_initial_data?.aksesuar || 'none',
+        description: p_initial_data?.raw_desc || '',
     });
 
     useEffect(() => {
         if (p_initial_data) {
             set_form_data(prev => ({
                 ...prev,
-                gender: p_initial_data.gender || 'female',
-                body_type: p_initial_data.body_type || 'average',
-                fit: p_initial_data.fit || 'regular',
+                gender: p_initial_data.gender === false ? 'male' : 'female',
+                body_type: p_initial_data.vücut_tipi || 'average',
+                fit: p_initial_data.kesim || 'regular',
                 background: p_initial_data.background || 'orange',
-                accessory: p_initial_data.accessory || 'none',
-                age: p_initial_data.age || 30,
-                description: p_initial_data.description || ''
+                accessory: p_initial_data.aksesuar || 'none',
+                age: p_initial_data.age || '30',
+                description: p_initial_data.raw_desc || ''
             }));
         }
     }, [p_initial_data]);
+
+    // Sync form_data changes to parent (for draft)
+    useEffect(() => {
+        if (p_on_change) {
+            const partial_data: Partial<I_Product_Data> = {
+                gender: form_data.gender === 'female',
+                age: form_data.age,
+                vücut_tipi: form_data.body_type,
+                kesim: form_data.fit,
+                background: form_data.background,
+                aksesuar: form_data.accessory,
+                raw_desc: form_data.description
+            };
+            p_on_change(partial_data);
+        }
+    }, [form_data, p_on_change]);
+
+    // Sync form_data changes to parent (for draft)
+    useEffect(() => {
+        if (p_on_change) {
+            const partial_data: Partial<I_Product_Data> = {
+                gender: form_data.gender === 'female',
+                age: form_data.age,
+                vücut_tipi: form_data.body_type,
+                kesim: form_data.fit,
+                background: form_data.background,
+                aksesuar: form_data.accessory,
+                raw_desc: form_data.description
+            };
+            p_on_change(partial_data);
+        }
+    }, [form_data, p_on_change]);
 
     const F_Handle_Change = (e: React.ChangeEvent<HTMLSelectElement | HTMLInputElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -67,12 +100,12 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         e.preventDefault();
 
         // Validation
-        if (!front_file && !p_initial_data?.front_image) {
+        if (!front_file && !p_initial_data?.raw_front) {
             alert(F_Get_Text('validation.required_images'));
             return;
         }
 
-        if (!back_file && !p_initial_data?.back_image) {
+        if (!back_file && !p_initial_data?.raw_back) {
             alert(F_Get_Text('validation.required_images'));
             return;
         }
@@ -82,7 +115,22 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
             return;
         }
 
-        await p_on_submit(form_data, front_file, back_file);
+        // Map form data back to schema-compatible object if needed by parent,
+        // OR parent handles it. `p_on_submit` takes `Partial<I_Product_Data>`.
+        // But `form_data` here has english keys.
+        // I will map it here to be safe and clean.
+        const submit_data: Partial<I_Product_Data> = {
+            gender: form_data.gender === 'female', // true if female
+            age: form_data.age.toString(),
+            vücut_tipi: form_data.body_type,
+            kesim: form_data.fit,
+            background: form_data.background,
+            aksesuar: form_data.accessory,
+            raw_desc: form_data.description,
+            // Images handled separately
+        };
+
+        await p_on_submit(submit_data, front_file, back_file);
     };
 
     return (
@@ -100,7 +148,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             p_label="" // Handled by outer label
                             p_file={front_file}
                             p_on_change={set_front_file}
-                            p_preview_url={p_initial_data?.front_image}
+                            p_preview_url={p_initial_data?.raw_front}
                         />
                     </div>
                 </div>
@@ -115,7 +163,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             p_label=""
                             p_file={back_file}
                             p_on_change={set_back_file}
-                            p_preview_url={p_initial_data?.back_image}
+                            p_preview_url={p_initial_data?.raw_back}
                         />
                     </div>
                 </div>

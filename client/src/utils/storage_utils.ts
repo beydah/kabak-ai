@@ -26,6 +26,10 @@ const F_Notify_Table = () => {
 
 // PRODUCT OPERATIONS (ASYNC - IndexedDB)
 export const F_Save_Product = async (p_product: I_Product_Data) => {
+    if (!p_product.product_id || p_product.product_id === 'undefined') {
+        console.error("[Storage] Save aborted: Missing ID", p_product);
+        throw new Error("Invalid ID");
+    }
     try {
         await DB_Service.saveProduct(p_product);
         F_Notify_Table();
@@ -37,7 +41,9 @@ export const F_Save_Product = async (p_product: I_Product_Data) => {
 
 export const F_Get_All_Products = async (): Promise<I_Product_Data[]> => {
     try {
-        return await DB_Service.getAllProducts();
+        const products = await DB_Service.getAllProducts();
+        // Filter out corrupt data from UI immediately
+        return products.filter(p => p.product_id && p.product_id !== 'undefined');
     } catch (e) {
         console.error("Failed to fetch products:", e);
         return [];
@@ -45,6 +51,10 @@ export const F_Get_All_Products = async (): Promise<I_Product_Data[]> => {
 };
 
 export const F_Get_Product_By_Id = async (p_id: string): Promise<I_Product_Data | undefined> => {
+    if (!p_id || p_id === 'undefined') {
+        console.error("[Storage] Get aborted: Invalid ID");
+        return undefined;
+    }
     try {
         return await DB_Service.getProduct(p_id);
     } catch (e) {
@@ -53,26 +63,62 @@ export const F_Get_Product_By_Id = async (p_id: string): Promise<I_Product_Data 
     }
 };
 
-export const F_Update_Product_Status = async (p_id: string, p_status: ProductStatus, p_error?: string, p_title?: string, p_desc?: string) => {
+export const F_Update_Product_Status = async (p_id: string, p_status: ProductStatus, p_error?: string, p_title?: string, p_desc?: string, p_generated_image?: string) => {
+    if (!p_id || p_id === 'undefined') {
+        console.error("[Storage] Update Status aborted: Invalid ID");
+        throw new Error("FATAL: Invalid ID in Status Update");
+    }
     try {
         const product = await DB_Service.getProduct(p_id);
         if (product) {
             product.status = p_status;
             if (p_error) product.error_log = p_error;
-            if (p_title) product.generated_title = p_title;
-            if (p_desc) product.generated_description = p_desc;
+            if (p_title) product.product_title = p_title;
+            if (p_desc) product.product_desc = p_desc;
+            if (p_generated_image) product.model_front = p_generated_image;
+
+            // Retry Count Logic handled by caller, but we persist it if it exists in object
+            // Just updating timestamp here
+            product.update_at = Date.now();
+
             await DB_Service.saveProduct(product);
             F_Notify_Table();
+        } else {
+            console.warn(`[Storage] Product not found for update: ${p_id}`);
         }
     } catch (e) {
         console.error("Failed to update status:", e);
+        throw e;
     }
 };
 
 export const F_Delete_Product_By_Id = async (p_id: string) => {
+    if (!p_id || p_id === 'undefined') return;
     await DB_Service.deleteProduct(p_id);
     F_Notify_Table();
 }
+
+export const F_Purge_Corrupt_Data = async () => {
+    try {
+        const products = await DB_Service.getAllProducts();
+        const corrupt = products.filter(p => !p.product_id || p.product_id === 'undefined');
+
+        if (corrupt.length > 0) {
+            console.warn(`[Storage] Found ${corrupt.length} corrupt items. Purging...`);
+            for (const p of corrupt) {
+                // Try to delete using the key if it matches the bad ID, 
+                // or just best effort if the key is effectively unreachable standardly.
+                // Assuming key was saved as 'undefined' string or empty.
+                if (p.product_id) await DB_Service.deleteProduct(p.product_id);
+            }
+            F_Notify_Table();
+        }
+    } catch (e) {
+        console.error("[Storage] Purge failed", e);
+    }
+};
+// Run Purge
+F_Purge_Corrupt_Data();
 
 // ... (Draft operations unchanged) ...
 // DRAFT OPERATIONS (SYNC - LocalStorage)
@@ -158,15 +204,25 @@ export const F_Get_All_Metrics = async (): Promise<I_Metric[]> => {
 };
 
 // Preference Utils using Cookies (as requested) + LocalStorage backup
-export const F_Set_Preference = (p_key: 'theme' | 'lang', p_value: string) => {
+export const F_Set_Preference = (p_key: 'theme' | 'lang' | 'app_currency', p_value: string) => {
     // Set Cookie
     document.cookie = `${p_key}=${p_value}; path=/; max-age=31536000; SameSite=Lax; Secure`; // 1 year
+
     // Set LocalStorage (redundancy)
-    localStorage.setItem(p_key === 'theme' ? STORAGE_KEY_THEME : STORAGE_KEY_LANG, p_value);
+    let ls_key = 'kabak_ai_currency';
+    if (p_key === 'theme') ls_key = STORAGE_KEY_THEME;
+    if (p_key === 'lang') ls_key = STORAGE_KEY_LANG;
+
+    localStorage.setItem(ls_key, p_value);
 };
 
-export const F_Get_Preference = (p_key: 'theme' | 'lang'): string | null => {
+export const F_Get_Preference = (p_key: 'theme' | 'lang' | 'app_currency'): string | null => {
     const match = document.cookie.split('; ').find(row => row.startsWith(`${p_key}=`));
     if (match) return match.split('=')[1];
-    return localStorage.getItem(p_key === 'theme' ? STORAGE_KEY_THEME : STORAGE_KEY_LANG);
+
+    let ls_key = 'kabak_ai_currency';
+    if (p_key === 'theme') ls_key = STORAGE_KEY_THEME;
+    if (p_key === 'lang') ls_key = STORAGE_KEY_LANG;
+
+    return localStorage.getItem(ls_key);
 };

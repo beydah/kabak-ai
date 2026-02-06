@@ -16,7 +16,7 @@ export const F_Product_Page: React.FC = () => {
     const [copied_field, set_copied_field] = useState<string | null>(null);
 
     // State for image switcher
-    const [active_image, set_active_image] = useState<'front' | 'back'>('front');
+    const [active_image, set_active_image] = useState<'front' | 'back' | 'model'>('front');
 
     // Modals
     const [is_edit_modal_open, set_is_edit_modal_open] = useState(false);
@@ -31,32 +31,53 @@ export const F_Product_Page: React.FC = () => {
             const data = await F_Get_Product_By_Id(id);
             if (data) {
                 set_product(data);
-                set_active_image('front');
+                // Priority: Model > Front
+                set_active_image(data.model_front ? 'model' : 'front');
             }
         }
     };
 
-    const F_Toggle_Image = () => {
-        if (product?.back_image) {
-            set_active_image(prev => prev === 'front' ? 'back' : 'front');
-        }
+    const F_Get_Image_Order = (): ('model' | 'front' | 'back')[] => {
+        const order: ('model' | 'front' | 'back')[] = [];
+        if (product?.model_front) order.push('model');
+        if (product?.raw_front) order.push('front');
+        if (product?.raw_back) order.push('back');
+        return order;
+    };
+
+    const F_Next_Image = () => {
+        const order = F_Get_Image_Order();
+        if (order.length <= 1) return;
+
+        const current_index = order.indexOf(active_image);
+        const next_index = (current_index + 1) % order.length;
+        set_active_image(order[next_index]);
+    };
+
+    const F_Prev_Image = () => {
+        const order = F_Get_Image_Order();
+        if (order.length <= 1) return;
+
+        const current_index = order.indexOf(active_image);
+        const prev_index = (current_index - 1 + order.length) % order.length;
+        set_active_image(order[prev_index]);
     };
 
     const F_Handle_Download = () => {
         if (!product) return;
-        if (product.front_image) {
+        if (product.raw_front) {
             const link = document.createElement('a');
-            link.href = product.front_image;
-            link.download = `front_${product.id}.png`;
+            link.href = product.raw_front;
+            link.download = `front_${product.product_id}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
-        if (product.back_image) {
+        if (product.raw_back) {
             setTimeout(() => {
                 const link = document.createElement('a');
-                link.href = product.back_image;
-                link.download = `back_${product.id}.png`;
+                link.href = product.raw_back;
+                link.download = `back_${product.product_id}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
@@ -87,12 +108,15 @@ export const F_Product_Page: React.FC = () => {
         );
     }
 
-    const current_image_src = active_image === 'front' ? product.front_image : (product.back_image || product.front_image);
-    const has_multiple_images = !!product.back_image;
+    const current_image_src =
+        active_image === 'model' && product.model_front ? product.model_front :
+            active_image === 'back' ? (product.raw_back || product.raw_front) :
+                product.raw_front;
+    const has_multiple_images = (product.raw_back || product.model_front);
 
     // Display Data
-    const display_title = product.generated_title || F_Get_Text('product.title');
-    const display_desc = product.generated_description || product.description || 'No description provided.';
+    const display_title = product.product_title || F_Get_Text('product.title');
+    const display_desc = product.product_desc || product.raw_desc || 'No description provided.';
 
     return (
         <F_Main_Template p_is_authenticated={true}>
@@ -116,32 +140,45 @@ export const F_Product_Page: React.FC = () => {
                                 key={active_image} // Force re-render for animation
                                 src={current_image_src}
                                 alt="Main View"
-                                className="w-full h-full object-cover animate-fade-in"
+                                className="w-full h-full object-cover animate-fade-in transition-all duration-500"
                             />
 
-                            {/* Navigation Arrows (Only if multiple images) */}
+                            {/* Navigation Arrows (Interactive Gallery) */}
                             {has_multiple_images && (
-                                <>
+                                <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); F_Toggle_Image(); }}
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => { e.stopPropagation(); F_Prev_Image(); }}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
                                         title={F_Get_Text('product.prev_image')}
                                     >
                                         <ChevronLeft size={24} />
                                     </button>
                                     <button
-                                        onClick={(e) => { e.stopPropagation(); F_Toggle_Image(); }}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 hover:bg-black/60 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={(e) => { e.stopPropagation(); F_Next_Image(); }}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
                                         title={F_Get_Text('product.next_image')}
                                     >
                                         <ChevronRight size={24} />
                                     </button>
-                                </>
+                                </div>
                             )}
                         </div>
 
                         {/* Thumbnails Row */}
                         <div className="flex gap-4 overflow-x-auto pb-2">
+                            {/* AI Model Thumb */}
+                            {product.model_front && (
+                                <button
+                                    onClick={() => set_active_image('model')}
+                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-transparent hover:border-secondary/30'
+                                        }`}
+                                >
+                                    <img src={product.model_front} alt="AI Model" className="w-full h-full object-cover" />
+                                </button>
+                            )}
+
                             {/* Front Thumb */}
                             <button
                                 onClick={() => set_active_image('front')}
@@ -150,11 +187,11 @@ export const F_Product_Page: React.FC = () => {
                                     : 'border-transparent hover:border-secondary/30'
                                     }`}
                             >
-                                <img src={product.front_image} alt="Front Thumbnail" className="w-full h-full object-cover" />
+                                <img src={product.raw_front} alt="Front Thumbnail" className="w-full h-full object-cover" />
                             </button>
 
                             {/* Back Thumb */}
-                            {product.back_image && (
+                            {product.raw_back && (
                                 <button
                                     onClick={() => set_active_image('back')}
                                     className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'back'
@@ -162,7 +199,7 @@ export const F_Product_Page: React.FC = () => {
                                         : 'border-transparent hover:border-secondary/30'
                                         }`}
                                 >
-                                    <img src={product.back_image} alt="Back Thumbnail" className="w-full h-full object-cover" />
+                                    <img src={product.raw_back} alt="Back Thumbnail" className="w-full h-full object-cover" />
                                 </button>
                             )}
                         </div>
@@ -185,7 +222,7 @@ export const F_Product_Page: React.FC = () => {
                                     {copied_field === 'title' ? <Check size={20} className="text-green-500" /> : <Copy size={20} />}
                                 </button>
                             </div>
-                            <p className="text-secondary text-sm mt-1">ID: {product.id}</p>
+                            <p className="text-secondary text-sm mt-1">ID: {product.product_id}</p>
                         </div>
 
                         {/* Description Section */}
@@ -222,7 +259,7 @@ export const F_Product_Page: React.FC = () => {
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.gender')}</dt>
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {product.gender ? F_Get_Text(`new_product.options.gender.${product.gender}`) : product.gender}
+                                    {F_Get_Text(`new_product.options.gender.${product.gender ? 'female' : 'male'}`)}
                                 </dd>
                             </div>
                             <div>
@@ -232,13 +269,13 @@ export const F_Product_Page: React.FC = () => {
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.body_type')}</dt>
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {product.body_type ? F_Get_Text(`new_product.options.body_type.${product.body_type}`) : product.body_type}
+                                    {product.vücut_tipi ? F_Get_Text(`new_product.options.body_type.${product.vücut_tipi}`) : product.vücut_tipi}
                                 </dd>
                             </div>
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.fit')}</dt>
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {product.fit ? F_Get_Text(`new_product.options.fit.${product.fit}`) : product.fit}
+                                    {product.kesim ? F_Get_Text(`new_product.options.fit.${product.kesim}`) : product.kesim}
                                 </dd>
                             </div>
                             <div>
@@ -250,7 +287,7 @@ export const F_Product_Page: React.FC = () => {
                             <div>
                                 <dt className="text-secondary text-sm">{F_Get_Text('new_product.labels.accessory')}</dt>
                                 <dd className="font-medium capitalize text-text-light dark:text-text-dark">
-                                    {product.accessory ? F_Get_Text(`new_product.options.accessory.${product.accessory}`) : product.accessory}
+                                    {product.aksesuar ? F_Get_Text(`new_product.options.accessory.${product.aksesuar}`) : product.aksesuar}
                                 </dd>
                             </div>
                         </div>

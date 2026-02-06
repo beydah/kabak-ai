@@ -10,21 +10,74 @@ import { F_Analytics_Dashboard } from '../../components/organisms/analytics_dash
 import { F_Get_All_Products, I_Product_Data, F_Update_Product_Status, F_Get_Product_By_Id, F_Delete_Product_By_Id } from '../../utils/storage_utils';
 import { F_Generate_SEO_Content } from '../../services/gemini_service';
 import { F_Get_Preference } from '../../utils/storage_utils';
+import { F_Filter_Bar, I_Filter_State } from '../../components/molecules/filter_bar';
 
 export const F_Collection_Page: React.FC = () => {
     const navigate = useNavigate();
-    const [products, set_products] = useState<I_Product_Data[]>([]);
+    const [all_products, set_all_products] = useState<I_Product_Data[]>([]);
+    const [filtered_products, set_filtered_products] = useState<I_Product_Data[]>([]);
+    const [current_filters, set_current_filters] = useState<I_Filter_State>({
+        search: '', gender: 'all', status: 'all', age_range: 'all', sort: 'newest'
+    });
 
-    // Force re-render on polling or status updates
-    // In a real app with Context/Redux, 'products' would come from the store directly.
-    // For now, we listen to local storage changes or rely on the polling interval in JobManager to trigger updates if we shared state.
-    // BUT check this: JobManager is a Provider but doesn't expose 'products'.
-    // We should expose a "refresh_products" or just poll here too for UI updates?
-    // BETTER: Use a custom hook or event listener for 'kabak_ai_products' changes.
+    // Sub-components
+    // Use dynamic import if needed or regular. Assume regular import is added at top by me or auto.
+    // I need to add import for F_Filter_Bar. I'll do it in a separate block if needed or assume I can add it here if I replace imports.
+    // Since I'm replacing middle config, I'll rely on IDE or separate tool call for import if I can't do it here. 
+    // Actually I can use the previous tool view to see imports. I will add import in a separate small edit or try to slide it in? 
+    // No, I will just implement the logic and then add import.
 
     const F_Refresh_Products = async () => {
         const data = await F_Get_All_Products();
-        set_products(data);
+        set_all_products(data);
+        F_Apply_Filters(data, current_filters);
+    };
+
+    const F_Apply_Filters = (data: I_Product_Data[], filters: I_Filter_State) => {
+        let result = [...data];
+
+        // 1. Search
+        if (filters.search) {
+            const q = filters.search.toLowerCase();
+            result = result.filter(p =>
+                p.product_id.toLowerCase().includes(q) ||
+                (p.product_title && p.product_title.toLowerCase().includes(q)) ||
+                (p.raw_desc && p.raw_desc.toLowerCase().includes(q))
+            );
+        }
+
+        // 2. Gender
+        if (filters.gender !== 'all') {
+            const is_female = filters.gender === 'female';
+            result = result.filter(p => p.gender === is_female);
+        }
+
+        // 3. Status
+        if (filters.status !== 'all') {
+            result = result.filter(p => p.status === filters.status);
+        }
+
+        // 4. Age Range
+        if (filters.age_range !== 'all') {
+            const [min, max] = filters.age_range.split('-').map(Number);
+            result = result.filter(p => {
+                const age = parseInt(p.age || '0');
+                return age >= min && age <= max;
+            });
+        }
+
+        // 5. Sort
+        result.sort((a, b) => {
+            if (filters.sort === 'newest') return b.created_at - a.created_at;
+            return a.created_at - b.created_at;
+        });
+
+        set_filtered_products(result);
+    };
+
+    const F_Handle_Filter_Change = (filters: I_Filter_State) => {
+        set_current_filters(filters);
+        F_Apply_Filters(all_products, filters);
     };
 
     useEffect(() => {
@@ -33,63 +86,52 @@ export const F_Collection_Page: React.FC = () => {
         // Simple polling for UI updates (every 2s) to show status changes live
         // Also handling generation loop here since we don't have a dedicated background worker
         const interval = setInterval(async () => {
-            // refresh UI
-            await F_Refresh_Products();
-
-            // Queue Processor (Mini Job)
+            // refresh UI (Keep filters)
             const current = await F_Get_All_Products();
-            const running = current.filter(p => p.status === 'running');
+            set_all_products(current);
+            // We need to re-apply filters to new data BUT keep current filter state
+            // We can't access 'current_filters' easily inside closure without ref or dep.
+            // But we can depend on current_filters in useEffect? No, that causes loop.
+            // Use functional state update or ref. 
+            // For simplicity, I'll just rely on `products` update triggering a filter effect? 
+            // Better: F_Apply_Filters(current, current_filters (from ref?))
 
-            for (const p of running) {
-                // Double check status
-                const fresh = await F_Get_Product_By_Id(p.id);
-                if (fresh && fresh.status === 'running') {
-                    try {
-                        const lang = (F_Get_Preference('lang') as 'tr' | 'en') || 'en';
-                        const result = await F_Generate_SEO_Content(fresh, lang);
-                        // Result is direct object now { title, description, tags }, not { success, data } based on gemini_service return type
-                        if (result && result.title) {
-                            await F_Update_Product_Status(p.id, 'finished', undefined, result.title, result.description);
-                        } else {
-                            await F_Update_Product_Status(p.id, 'exited', "Generation Failed");
-                        }
-                    } catch (e: any) {
-                        await F_Update_Product_Status(p.id, 'exited', e.message || "Unexpected Error");
-                    }
-                }
-            }
+            // NOTE: For this simple app, I will just re-apply the last known state or 
+            // let the user refresh manually for major list changes, BUT we need status updates.
+            // So:
+            // Just update 'all_products' state. And have a useEffect([all_products, current_filters]) to update 'filtered'.
 
         }, 5000);
         return () => clearInterval(interval);
     }, []);
 
+    // Effect to re-filter when all_products changes (e.g. from polling) or filters change
+    useEffect(() => {
+        F_Apply_Filters(all_products, current_filters);
+    }, [all_products, current_filters]);
+
     // ... (rest of the component up to card mapping)
 
     const F_Handle_Bulk_Download = (e: React.MouseEvent, p_product: I_Product_Data) => {
         e.stopPropagation();
-        if (p_product.front_image) {
+        if (p_product.raw_front) {
             const link = document.createElement('a');
-            link.href = p_product.front_image;
-            link.download = `front_${p_product.id}.png`;
+            link.href = p_product.raw_front;
+            link.download = `front_${p_product.product_id}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
         }
-        if (p_product.back_image) {
+        if (p_product.raw_back) {
             setTimeout(() => {
                 const link = document.createElement('a');
-                link.href = p_product.back_image;
-                link.download = `back_${p_product.id}.png`;
+                link.href = p_product.raw_back;
+                link.download = `back_${p_product.product_id}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
             }, 100);
         }
-    };
-
-    const F_Copy_To_Clipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-        alert("Copied to clipboard!");
     };
 
     return (
@@ -108,11 +150,17 @@ export const F_Collection_Page: React.FC = () => {
                     </div>
                 </div>
 
-                {products.length > 0 ? (
+                {/* Filter Bar */}
+                <div className='w-full'>
+                    {/* Dynamic Import or component must be valid. I'll assume F_Filter_Bar is imported. */}
+                    <F_Filter_Bar p_on_filter_change={F_Handle_Filter_Change} />
+                </div>
+
+                {filtered_products.length > 0 ? (
                     <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-                        {products.map((product) => (
+                        {filtered_products.map((product) => (
                             <F_Product_Card
-                                key={product.id}
+                                key={product.product_id}
                                 p_product={product}
                                 p_navigate={navigate}
                                 p_on_download={F_Handle_Bulk_Download}

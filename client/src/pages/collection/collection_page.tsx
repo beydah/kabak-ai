@@ -7,10 +7,12 @@ import { F_Button } from '../../components/atoms/button';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Product_Card } from '../../components/organisms/product_card';
 import { F_Analytics_Dashboard } from '../../components/organisms/analytics_dashboard';
+import F_Storage_Dashboard from '../../components/molecules/storage_dashboard'; // Default export
 import { F_Get_All_Products, I_Product_Data, F_Update_Product_Status, F_Get_Product_By_Id, F_Delete_Product_By_Id } from '../../utils/storage_utils';
 import { F_Generate_SEO_Content } from '../../services/gemini_service';
 import { F_Get_Preference } from '../../utils/storage_utils';
 import { F_Filter_Bar, I_Filter_State } from '../../components/molecules/filter_bar';
+import { F_Detect_Gender_In_Query, F_Remove_Gender_Keywords } from '../../utils/keyword_utils';
 
 export const F_Collection_Page: React.FC = () => {
     const navigate = useNavigate();
@@ -36,14 +38,32 @@ export const F_Collection_Page: React.FC = () => {
     const F_Apply_Filters = (data: I_Product_Data[], filters: I_Filter_State) => {
         let result = [...data];
 
-        // 1. Search
+        // 1. Search (Smart Gender Filtering)
         if (filters.search) {
-            const q = filters.search.toLowerCase();
-            result = result.filter(p =>
-                p.product_id.toLowerCase().includes(q) ||
-                (p.product_title && p.product_title.toLowerCase().includes(q)) ||
-                (p.raw_desc && p.raw_desc.toLowerCase().includes(q))
-            );
+            let q = filters.search.toLowerCase().trim();
+            const detectedGender = F_Detect_Gender_In_Query(q);
+
+            // If gender detected, filter heavily on it first
+            if (detectedGender) {
+                // strict check: product.gender (boolean) mapping? 
+                // Interface says: gender: boolean (false=Male, true=Female)? Check interfaces.ts or usage
+                // In F_Apply_Filters: result = result.filter(p => p.gender === is_female);
+                // So true = Female ('Kadın'), false = Male ('Erkek')
+                const isFemale = detectedGender === 'Kadın';
+                result = result.filter(p => p.gender === isFemale);
+
+                // Remove the gender keyword from search to find the actual item (e.g. "ceket")
+                q = F_Remove_Gender_Keywords(q);
+            }
+
+            // Continue with text search if there is anything left (or if originally just text)
+            if (q.length > 0) {
+                result = result.filter(p =>
+                    p.product_id.toLowerCase().includes(q) ||
+                    (p.product_title && p.product_title.toLowerCase().includes(q)) ||
+                    (p.raw_desc && p.raw_desc.toLowerCase().includes(q))
+                );
+            }
         }
 
         // 2. Gender
@@ -144,6 +164,19 @@ export const F_Collection_Page: React.FC = () => {
 
                     <div className="flex items-center gap-4">
                         <F_Button
+                            p_label="Clear All Data"
+                            p_on_click={async () => {
+                                if (confirm("RESET SYSTEM? This will delete all products, drafts, and settings.")) {
+                                    localStorage.clear();
+                                    const products = await F_Get_All_Products();
+                                    for (const p of products) await F_Delete_Product_By_Id(p.product_id);
+                                    window.location.reload();
+                                }
+                            }}
+                            p_variant="secondary"
+                            p_class_name="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
+                        />
+                        <F_Button
                             p_label={F_Get_Text('collection.create_new')}
                             p_on_click={() => navigate('/new-product')}
                         />
@@ -178,6 +211,9 @@ export const F_Collection_Page: React.FC = () => {
 
                 {/* Analytics Section */}
                 <F_Analytics_Dashboard />
+
+                {/* Storage Management */}
+                <F_Storage_Dashboard />
 
             </div>
         </F_Main_Template>

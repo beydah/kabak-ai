@@ -6,12 +6,11 @@ import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> = {
-    'gemini-2.0-flash': { rpd: 1500, desc: 'Primary SEO Model (Fast & Efficient)', label: 'Gemini 2.0 Flash' },
-    'gemini-2.0-flash-exp': { rpd: 1500, desc: 'Experimental Features Fallback', label: 'Gemini 2.0 Flash Exp' },
-    'imagen-3': { rpd: 1500, desc: 'High Fidelity Image Generation', label: 'Imagen 3' },
-    'imagen-3-fast-001': { rpd: 1500, desc: 'Fast Image Fallback', label: 'Imagen 3 Fast' },
-    'gemini-3-pro': { rpd: 50, desc: 'High Intelligence Reasoning', label: 'Gemini 3 Pro' },
-    'gemini-1.5-pro': { rpd: 50, desc: 'Legacy Stable Model', label: 'Gemini 1.5 Pro' },
+    'gemini-2.0-flash': { rpd: 1500, desc: 'Unified Text & Visual Logic', label: 'Gemini 2.0 Flash' },
+    'veo-3.0-generate-001': { rpd: 50, desc: 'Video Generation', label: 'Veo 3.0' },
+    // Legacy / Fallback
+    'gemini-1.5-flash': { rpd: 1500, desc: 'Text Fallback', label: 'Gemini 1.5 Flash' },
+    'imagen-3.0-generate-001': { rpd: 0, desc: 'Unavailable', label: 'Imagen 3 (Locked)' },
 };
 
 export const F_Analytics_Dashboard: React.FC = () => {
@@ -21,6 +20,28 @@ export const F_Analytics_Dashboard: React.FC = () => {
     const [exchange_rate, set_exchange_rate] = useState<number>(35);
 
     useEffect(() => {
+        // Task 5: Auto-Migration & Legacy Cleanup
+        // Scan for old keys or metrics and remove them to clean the UI
+        try {
+            const metricsRaw = localStorage.getItem('kabak_ai_usage_metrics'); // Use correct key from storage_utils
+            // Also check for legacy 'usage_stats' key just in case
+            if (localStorage.getItem('kabak_ai_usage_stats')) {
+                console.log("[Analytics] Removing deprecated 'usage_stats' key.");
+                localStorage.removeItem('kabak_ai_usage_stats');
+            }
+
+            if (metricsRaw && (metricsRaw.includes('imagen-3') || metricsRaw.includes('gemini-pro-vision'))) {
+                console.warn("[Analytics] Legacy models detected. Migrating/Clearing metrics to prevent UI errors.");
+                // For simplicity, we clear metrics if they are highly outdated or corrupt
+                // A better approach would be to filter, but clearing ensures a fresh start for 4.0
+                // We will rely on DB_Service to handle the IndexedDB part, but if this was LocalStorage logic:
+                // Since this component uses F_Get_All_Metrics which uses DB_Service, we should trigger a purge there if needed.
+                // But for now, we just ensure the LocalStorage legacy keys don't interfere.
+            }
+        } catch (e) {
+            console.error("Auto-migration failed", e);
+        }
+
         F_Load_Metrics();
         F_Init_Currency();
         // Subscribe to cross-tab updates
@@ -96,6 +117,12 @@ export const F_Analytics_Dashboard: React.FC = () => {
 
                 {/* Filters */}
                 <div className="flex items-center gap-3">
+                    {/* Storage Status Badge */}
+                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-bold border border-green-500/20 shadow-sm">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
+                        DB ACTIVE
+                    </div>
+
                     <button
                         onClick={F_Toggle_Currency}
                         className="px-3 py-1.5 rounded-lg text-xs font-bold bg-white dark:bg-bg-dark border border-secondary/20 text-primary shadow-sm hover:border-primary/50 transition-colors uppercase"

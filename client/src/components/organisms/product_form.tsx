@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { F_Button } from '../../components/atoms/button';
 import { F_File_Upload } from '../../components/molecules/file_upload';
-import { I_Product_Data } from '../../utils/storage_utils';
+import { I_Product_Data, F_Save_Draft_Image, F_Get_Draft_Image, F_Remove_Draft_Image } from '../../utils/storage_utils';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { v4 as uuidv4 } from 'uuid';
 import { F_File_To_Base64 } from '../../utils/file_utils';
@@ -35,7 +35,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         const loadDraftImages = async () => {
             try {
                 // Front Image
-                const frontB64 = localStorage.getItem(DRAFT_IMG_FRONT);
+                const frontB64 = await F_Get_Draft_Image(DRAFT_IMG_FRONT);
                 if (frontB64 && !p_initial_data?.raw_front) {
                     const res = await fetch(frontB64);
                     const blob = await res.blob();
@@ -44,7 +44,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 }
 
                 // Back Image
-                const backB64 = localStorage.getItem(DRAFT_IMG_BACK);
+                const backB64 = await F_Get_Draft_Image(DRAFT_IMG_BACK);
                 if (backB64 && !p_initial_data?.raw_back) {
                     const res = await fetch(backB64);
                     const blob = await res.blob();
@@ -64,10 +64,10 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         if (file) {
             try {
                 const b64 = await F_File_To_Base64(file);
-                localStorage.setItem(DRAFT_IMG_FRONT, b64);
+                await F_Save_Draft_Image(DRAFT_IMG_FRONT, b64);
             } catch (e) { console.error("Draft save failed", e); }
         } else {
-            localStorage.removeItem(DRAFT_IMG_FRONT);
+            await F_Remove_Draft_Image(DRAFT_IMG_FRONT);
         }
     };
 
@@ -76,10 +76,10 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
         if (file) {
             try {
                 const b64 = await F_File_To_Base64(file);
-                localStorage.setItem(DRAFT_IMG_BACK, b64);
+                await F_Save_Draft_Image(DRAFT_IMG_BACK, b64);
             } catch (e) { console.error("Draft save failed", e); }
         } else {
-            localStorage.removeItem(DRAFT_IMG_BACK);
+            await F_Remove_Draft_Image(DRAFT_IMG_BACK);
         }
     };
 
@@ -218,6 +218,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             name="gender"
                             value={form_data.gender}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         >
                             <option value="female">{F_Get_Text('new_product.options.gender.female')}</option>
@@ -234,6 +235,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             name="body_type"
                             value={form_data.body_type}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         >
                             <option value="slim">{F_Get_Text('new_product.options.body_type.slim')}</option>
@@ -251,6 +253,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             name="background"
                             value={form_data.background}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         >
                             <option value="black">{F_Get_Text('new_product.options.background.black')}</option>
@@ -276,6 +279,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             max={50}
                             value={form_data.age}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         />
                     </div>
@@ -289,6 +293,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             name="fit"
                             value={form_data.fit}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         >
                             <option value="slim">{F_Get_Text('new_product.options.fit.slim')}</option>
@@ -306,6 +311,7 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                             name="accessory"
                             value={form_data.accessory}
                             onChange={F_Handle_Change}
+                            autoComplete="off"
                             className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none"
                         >
                             <option value="none">{F_Get_Text('new_product.options.accessory.none')}</option>
@@ -326,11 +332,13 @@ export const F_Product_Form: React.FC<Product_Form_Props> = ({
                 <textarea
                     id="description"
                     name="description"
+                    autoComplete="off"
                     value={form_data.description}
                     onChange={F_Handle_Change}
                     rows={3}
                     placeholder={F_Get_Text('new_product.placeholders.description')}
                     className="w-full px-3 py-2 rounded-lg border border-secondary/30 bg-bg-light dark:bg-bg-dark text-sm focus:ring-1 focus:ring-primary outline-none resize-none"
+                    aria-label={F_Get_Text('new_product.labels.description')}
                 />
             </div>
 

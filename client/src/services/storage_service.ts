@@ -5,6 +5,7 @@ const DB_VERSION = 3; // Increment version to trigger upgrade
 const STORE_PRODUCTS = 'products';
 const STORE_LOGS = 'error_logs';
 const STORE_METRICS = 'metrics';
+const STORE_DRAFTS = 'drafts';
 
 class StorageService {
     private db: IDBDatabase | null = null;
@@ -13,7 +14,7 @@ class StorageService {
         if (this.db) return this.db;
 
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            const request = indexedDB.open(DB_NAME, DB_VERSION + 1); // Trigger upgrade
 
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
@@ -24,17 +25,18 @@ class StorageService {
             request.onupgradeneeded = (event) => {
                 const db = (event.target as IDBOpenDBRequest).result;
 
-                // MIGRATION V3: Switch to 'product_id'
-                if (db.objectStoreNames.contains(STORE_PRODUCTS)) {
-                    db.deleteObjectStore(STORE_PRODUCTS);
+                if (!db.objectStoreNames.contains(STORE_PRODUCTS)) {
+                    db.createObjectStore(STORE_PRODUCTS, { keyPath: 'product_id' });
                 }
-                db.createObjectStore(STORE_PRODUCTS, { keyPath: 'product_id' });
-
                 if (!db.objectStoreNames.contains(STORE_LOGS)) {
                     db.createObjectStore(STORE_LOGS, { keyPath: 'id' });
                 }
                 if (!db.objectStoreNames.contains(STORE_METRICS)) {
                     db.createObjectStore(STORE_METRICS, { keyPath: 'model_id' });
+                }
+                // New Drafts Store (Simple Key-Value)
+                if (!db.objectStoreNames.contains(STORE_DRAFTS)) {
+                    db.createObjectStore(STORE_DRAFTS);
                 }
             };
         });
@@ -160,6 +162,33 @@ class StorageService {
 
     async clearLogs(): Promise<void> {
         await this.clear(STORE_LOGS);
+    }
+
+    // DRAFT METHODS
+    async saveDraft(key: string, value: any): Promise<void> {
+        const db = await this.getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_DRAFTS, 'readwrite');
+            const store = tx.objectStore(STORE_DRAFTS);
+            const req = store.put(value, key);
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async getDraft<T>(key: string): Promise<T | null> {
+        const db = await this.getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_DRAFTS, 'readonly');
+            const store = tx.objectStore(STORE_DRAFTS);
+            const req = store.get(key);
+            req.onsuccess = () => resolve(req.result || null);
+            req.onerror = () => resolve(null); // Key not found is not an error
+        });
+    }
+
+    async clearDrafts(): Promise<void> {
+        await this.clear(STORE_DRAFTS);
     }
 
     // MIGRATION HELPER

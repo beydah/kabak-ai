@@ -5,38 +5,38 @@ import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Product_Form } from '../../components/organisms/product_form';
-import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft } from '../../utils/storage_utils';
+import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft, F_Remove_Draft_Image } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
 import { F_Save_Product_Preferences, F_Get_Product_Preferences } from '../../utils/cookie_utils';
 
 export const F_New_Product_Page: React.FC = () => {
     const navigate = useNavigate();
+    const [initial_data, set_initial_data] = React.useState<Partial<I_Product_Data> | undefined>(undefined);
+    const [is_loading, set_is_loading] = React.useState(true);
 
-    // Initial Data Logic (Draft vs Cookies vs Empty)
-    const F_Get_Initial_Data = (): Partial<I_Product_Data> => {
-        const draft = F_Get_Draft();
-        if (draft) return draft;
-
-        const cookies = F_Get_Product_Preferences();
-        return cookies; // Will populate gender, bg etc.
-    };
-
-    const initial_data = F_Get_Initial_Data();
-
-    // Auto-Save Draft happens inside ProductForm? 
-    // Ideally ProductForm should accept an onChange to bubble up changes, or we handle it here.
-    // Since ProductForm handles state internally, we need to inject a mechanism.
-    // For now, simpler: we modify ProductForm to accept `p_on_change` and we save draft there.
-    // OR: ProductForm can handle draft internal logic if we pass `p_enable_draft`.
-    // Let's modify ProductForm usage. We need to catch updates.
-
-    // Actually, ProductForm props don't have on_change.
-    // We will update ProductForm to emit changes or handle draft internally?
-    // Let's pass `p_on_draft_update` to ProductForm.
+    // Initial Data Logic (Draft vs Cookies vs Empty) - ASYNC
+    useEffect(() => {
+        const load = async () => {
+            try {
+                const draft = await F_Get_Draft();
+                if (draft) {
+                    set_initial_data(draft);
+                } else {
+                    const cookies = F_Get_Product_Preferences();
+                    set_initial_data(cookies);
+                }
+            } catch (e) {
+                console.error("Failed to load draft", e);
+            } finally {
+                set_is_loading(false);
+            }
+        };
+        load();
+    }, []);
 
     const F_Handle_Submit = async (p_data: Partial<I_Product_Data>, p_front_file: File | null, p_back_file: File | null) => {
         if (!p_front_file && !p_data.raw_front) {
-            alert("Please upload a front photo."); // Should be handled by form validation now
+            alert("Please upload a front photo.");
             return;
         }
 
@@ -69,7 +69,6 @@ export const F_New_Product_Page: React.FC = () => {
                 gender: final_gender,
 
                 // Smart Fallbacks
-                // p_data uses Interface Keys (Turkish/Mixed), Cookies use English aliases
                 age: p_data.age || cookies.age || '30',
                 vücut_tipi: p_data.vücut_tipi || cookies.body_type || 'average',
                 kesim: p_data.kesim || cookies.fit || 'regular',
@@ -83,20 +82,7 @@ export const F_New_Product_Page: React.FC = () => {
 
             // VALIDATION: Ensure Data Integrity
             if (!new_product.product_id) throw new Error("ID Generation Failed");
-            if (new_product.gender === undefined) new_product.gender = true; // Final safety net
-
-            // PAYLOAD DEBUG (User Request)
-            console.log("--------------- SUBMISSION PAYLOAD ---------------");
-            console.table({
-                id: new_product.product_id,
-                gender_bool: new_product.gender,
-                gender_text: new_product.gender !== false ? 'FEMALE' : 'MALE',
-                age: new_product.age,
-                body: new_product.vücut_tipi,
-                fit: new_product.kesim,
-                desc: new_product.raw_desc
-            });
-            console.log("--------------------------------------------------");
+            if (new_product.gender === undefined) new_product.gender = true;
 
             // 1. Save Product
             await F_Save_Product(new_product);
@@ -104,12 +90,10 @@ export const F_New_Product_Page: React.FC = () => {
             // 2. Save Preferences (Cookies)
             F_Save_Product_Preferences(p_data);
 
-            // 3. Clear Draft
-            F_Clear_Draft();
-
-            // 3b. Clear Draft Images (Explicit Cleanup)
-            localStorage.removeItem('kabak_draft_img_front');
-            localStorage.removeItem('kabak_draft_img_back');
+            // 3. Clear Draft (Async)
+            await F_Clear_Draft();
+            await F_Remove_Draft_Image('kabak_draft_img_front');
+            await F_Remove_Draft_Image('kabak_draft_img_back');
 
             navigate('/collection');
 
@@ -119,9 +103,24 @@ export const F_New_Product_Page: React.FC = () => {
         }
     };
 
-    const F_Handle_Draft_Update = (data: Partial<I_Product_Data>) => {
-        F_Save_Draft(data);
+    const F_Handle_Draft_Update = async (data: Partial<I_Product_Data>) => {
+        // Fire and forget or simple catch
+        try {
+            await F_Save_Draft(data);
+        } catch (e) {
+            console.error("Failed to save draft", e);
+        }
     };
+
+    if (is_loading) {
+        return (
+            <F_Main_Template p_is_authenticated={true}>
+                <div className="flex justify-center items-center h-64">
+                    <span className="loading loading-spinner text-primary"></span>
+                </div>
+            </F_Main_Template>
+        );
+    }
 
     return (
         <F_Main_Template p_is_authenticated={true}>
@@ -142,7 +141,7 @@ export const F_New_Product_Page: React.FC = () => {
                 {/* Form Card */}
                 <div className="bg-white dark:bg-bg-dark rounded-xl shadow-lg border border-secondary/20 p-6 md:p-8">
                     <F_Product_Form
-                        p_initial_data={initial_data as I_Product_Data} // Cast to satisfy prop requirement if Partial is not enough, but we changed prop type to Partial.
+                        p_initial_data={initial_data as I_Product_Data}
                         p_on_submit={F_Handle_Submit}
                         p_on_cancel={() => navigate('/collection')}
                         p_on_change={F_Handle_Draft_Update}

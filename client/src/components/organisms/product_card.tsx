@@ -55,6 +55,12 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
         set_show_delete_confirm(false);
     };
 
+    // Granular Status Helpers
+    const is_seo_updating = p_product.seo_status === 'updating' || p_product.seo_status === 'pending';
+    const is_front_updating = p_product.front_status === 'updating' || (p_product.front_status === 'pending' && !p_product.model_front);
+    const is_back_updating = p_product.back_status === 'updating' || (p_product.back_status === 'pending' && has_back_image);
+    const is_video_updating = p_product.video_status === 'updating' || (p_product.video_status === 'pending' && p_product.front_status === 'completed');
+
     // Display Logic: 
     // If View is Front AND Generated Image exists -> Show Generated (Priority 1)
     // Else -> Show Raw Front (Priority 2)
@@ -79,7 +85,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                         alt="front"
                         className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                             ${current_view === 'front' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
-                            ${(is_running) ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
+                            ${(is_front_updating && current_view === 'front') ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
                             ${(is_exited) ? 'blur-sm grayscale' : ''}
                         `}
                     />
@@ -91,14 +97,26 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                             alt="back"
                             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                                 ${current_view === 'back' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
-                                ${(is_running) ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
+                                ${(is_back_updating && current_view === 'back') ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
                                 ${(is_exited) ? 'blur-sm grayscale' : ''}
                             `}
                         />
                     )}
 
-                    {/* AI Badge (Only if Front View & Has AI) */}
-                    {/* Badge Removed per Task 2053 */}
+                    {/* Video Player (Veo 3.1) */}
+                    {p_product.model_video && (
+                        <video
+                            src={p_product.model_video}
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className={`absolute inset-0 w-full h-full object-cover z-20 
+                                ${current_view === 'front' ? 'opacity-100' : 'opacity-0'} 
+                                pointer-events-none group-hover:pointer-events-auto
+                            `}
+                        />
+                    )}
 
                     {/* RUNNING STATE - Shimmer Animation */}
                     {is_running && (
@@ -120,13 +138,16 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
 
                             {/* Shimmer Overlay */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
-                            {/* Pulse Overlay */}
-                            <div className="absolute inset-0 bg-orange-500/10 animate-pulse pointer-events-none" />
 
-                            {/* Status Text (Previously separate or implicit?) */}
-                            {/* If user wanted "Generating Image..." status displayed centrally, we can add it here too if needed. 
-                                Product Card line 160 handles text, but overlay covers image.
-                            */}
+                            {/* Granular Status Text Overlay */}
+                            <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
+                                <span className="inline-block px-3 py-1 bg-black/60 backdrop-blur-md text-white text-xs rounded-full shadow-lg">
+                                    {is_seo_updating ? "Writing Copy..." :
+                                        is_front_updating ? "Generating Front..." :
+                                            is_back_updating ? "Synthesizing Back..." :
+                                                is_video_updating ? "Filming Video..." : "Processing..."}
+                                </span>
+                            </div>
                         </div>
                     )}
 
@@ -170,6 +191,20 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                                     </button>
                                 </div>
                             )}
+
+                            {/* Video Download Button */}
+                            {p_product.model_video && (
+                                <div className="absolute bottom-2 right-2 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <a
+                                        href={p_product.model_video}
+                                        download={`kabak_ai_video_${p_product.product_id}.mp4`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/90 hover:bg-primary text-white text-xs font-bold rounded-full shadow-lg backdrop-blur-sm transition-all hover:scale-105"
+                                    >
+                                        <span>MP4</span>
+                                    </a>
+                                </div>
+                            )}
                         </>
                     )}
                 </div>
@@ -177,10 +212,10 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                 {/* Content */}
                 <div className="p-4 relative">
                     <p className="font-medium text-text-light dark:text-text-dark truncate">
-                        {is_running ? "Generating..." : (p_product.product_title || `ID: ${(p_product.product_id || "").substring(0, 8)}...`)}
+                        {is_seo_updating ? "Writing Optimization..." : (p_product.product_title || `ID: ${(p_product.product_id || "").substring(0, 8)}...`)}
                     </p>
                     <p className="text-sm text-secondary truncate mt-1">
-                        {is_running ? "Optimizing content..." : (p_product.product_desc || p_product.raw_desc || 'No description').substring(0, 80)}
+                        {is_seo_updating ? "Analyzing trends..." : (p_product.product_desc || p_product.raw_desc || 'No description').substring(0, 80)}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-secondary/60">

@@ -31,19 +31,34 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
     useEffect(() => {
         refresh_logs();
 
-        // POLL for "running" jobs
-        // In a real app, this might be a websocket or a dedicated worker.
-        // Here we use an interval to check local storage state.
+        // POLL for "running" jobs (and Chained Update Statuses)
         const interval = setInterval(async () => {
             const products = await F_Get_All_Products();
-            const running_products = products.filter(p => p.status === 'running');
 
-            running_products.forEach(async (product) => {
-                // TIMEOUT GUARD (5 Minutes = 300,000ms)
-                const TIMEOUT_MS = 300000;
+            // Filter where status is 'running' OR any granular status is 'pending'/'updating'
+            const active_products = products.filter(p =>
+                p.status === 'running' ||
+                p.analysis_status === 'pending' || p.analysis_status === 'updating' ||
+                p.seo_status === 'pending' || p.seo_status === 'updating' ||
+                p.front_status === 'pending' || p.front_status === 'updating' ||
+                p.back_status === 'pending' || p.back_status === 'updating' ||
+                p.video_status === 'pending' || p.video_status === 'updating'
+            );
+
+            active_products.forEach(async (product) => {
+                // TIMEOUT GUARD (10 Minutes)
+                const TIMEOUT_MS = 600000;
                 if (Date.now() - product.created_at > TIMEOUT_MS) {
                     console.warn(`[Job Manager] System Timeout for ${product.product_id}`);
-                    await F_Update_Product_Status(product.product_id, 'exited', "System Timeout: 5 Minutes");
+                    product.status = 'exited';
+                    product.error_log = "System Timeout: 10 Minutes";
+                    // Reset granular statuses to failed
+                    if (product.seo_status === 'updating' || product.seo_status === 'pending') product.seo_status = 'failed';
+                    if (product.front_status === 'updating' || product.front_status === 'pending') product.front_status = 'failed';
+                    if (product.back_status === 'updating' || product.back_status === 'pending') product.back_status = 'failed';
+                    if (product.video_status === 'updating' || product.video_status === 'pending') product.video_status = 'failed';
+
+                    await F_Save_Product(product);
                     return;
                 }
 
@@ -59,123 +74,179 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 }
 
                 try {
-                    console.log(`[Job Manager] Processing: ${product.product_id} (Attempt ${(product.retry_count || 0) + 1})`);
+                    // LOCK: Stop if finished or failed
+                    if (product.status === 'finished' || product.status === 'failed') return;
 
-                    // Call Gemini API
-                    const lang = F_Get_Language();
+                    console.log(`[Job Manager] Processing Chain: ${product.product_id}`);
 
-                    // STEP 1: Generate Text (SEO Content)
-                    if (!product.product_title || !product.product_desc) {
-                        const result = await F_Generate_SEO_Content(product, lang as 'tr' | 'en');
-
-                        await F_Update_Product_Status(
-                            product.product_id,
-                            'running',
-                            undefined,
-                            result.title,
-                            result.description
-                        );
-                        console.log(`[Job Manager] Text Generated for: ${product.product_id}`);
-                        return;
-                    }
-
-                    // STEP 2: Generate Image
-                    if (!product.model_front) {
-                        console.log(`[Job Manager] Status Change: Generating Image for ${product.product_id}...`);
-
-                        // Notify UI of detailed status (via error_log field as status message for now)
-                        // This allows the "Processing" badge to potentially show "Generating Image..." if UI checks this.
-                        if (product.error_log !== "Generating Image...") {
-                            product.error_log = "Generating Image...";
+                    // --- PHASE 2: VISUAL ANALYSIS (Gemini 2.5 Flash) ---
+                    // Condition: analysis 'pending' OR (running AND no analysis yet)
+                    if (product.analysis_status === 'pending' || (product.status === 'running' && !product.front_analyse)) {
+                        if (product.analysis_status !== 'updating') {
+                            product.analysis_status = 'updating';
+                            product.error_log = "Analyzing Visual Attributes (Flash 2.0)...";
                             await F_Save_Product(product);
                         }
 
-                        const { F_Generate_Model_Image } = await import('../../services/gemini_service');
-                        const image_base64 = await F_Generate_Model_Image(product);
+                        const { F_Analyze_Image } = await import('../../services/gemini_service');
 
-                        if (!image_base64) {
-                            throw new Error("Image Generation Failed (Empty Response)");
+                        // 2a. Front Analysis
+                        if (!product.front_analyse && product.raw_front) {
+                            product.front_analyse = await F_Analyze_Image(product.raw_front, "Describe detailed technical fashion attributes: Fit, Length, Fabric, Neckline, Sleeve, Color, Pattern. Output as concise keywords.");
                         }
 
-                        // ECHO GUARD: Prevent storing raw input as result
-                        if (image_base64 === product.raw_front) {
-                            // Simulation placeholder bypass (Check Step 2523 implementation of F_Generate_Model_Image returns a specific 1x1 pixel)
-                            // If it returns the 1x1 pixel, it is NOT equal to raw full raw_front.
-                            // So this guard is safe for real failures.
-                            throw new Error("Image Generation Failed (Returned Input)");
+                        // 2b. Back Analysis
+                        if (!product.back_analyse && product.raw_back) {
+                            product.back_analyse = await F_Analyze_Image(product.raw_back, "Describe back details: Cuts, Zippers, Pockets, Fit from back. Output as concise keywords.");
                         }
 
-                        await F_Update_Product_Status(
-                            product.product_id,
-                            'finished',
-                            undefined, // Clear error/status msg
-                            undefined, // Keep title
-                            undefined, // Keep desc
-                            image_base64
-                        );
-                        console.log(`[Job Manager] Image Generated and Job Finished for: ${product.product_id}`);
-                    }
+                        product.analysis_status = 'completed';
 
-                } catch (error: any) {
-                    console.error(`[Job Manager] Job Failed:`, error);
-                    const err_msg = error.message || "Unknown Gemini Error";
+                        // Trigger Next: SEO
+                        if (product.seo_status !== 'completed') product.seo_status = 'pending';
 
-                    let notify_title = "Job Failed";
-                    let notify_msg = err_msg;
-
-                    // MAPPING (User Specified)
-                    if (err_msg.includes("404")) {
-                        notify_title = "Engine Maintenance";
-                        notify_msg = "Image Engine (Imagen 3) unreachable. Falling back to placeholder.";
-                    } else if (err_msg.includes("SAFETY_FILTER_TRIGGERED") || err_msg.includes("IMAGEN_API_NO_IMAGE")) {
-                        notify_title = "Safety Filter";
-                        notify_msg = "Visual output restricted by safety filters. Adjusting description...";
-                    } else if (err_msg.includes("429") || err_msg.includes("Timeout")) {
-                        notify_title = "System Busy";
-                        notify_msg = "Upload too large or connection slow. Optimizing image...";
-                    }
-
-                    // CRITICAL VALIDATION FAILURE: Immediate Exit (No Retry)
-                    if (err_msg.includes("SAFETY_FILTER_TRIGGERED") || err_msg.includes("IMAGEN_API_NO_IMAGE") || err_msg.includes("404") || err_msg.includes("invalid/empty image") || err_msg.includes("Visual Engine maintenance") || err_msg.includes("Maintenance")) {
-                        console.error(`[Job Manager] Critical Failure for ${product.product_id}: ${err_msg}`);
-
-                        // Set status to exited immediately for these known terminal errors
-                        await F_Update_Product_Status(product.product_id, 'exited', `Exited: ${notify_title}`);
-
-                        F_Add_Error_Log({
-                            product_id: product.product_id,
-                            message: `${notify_title}: ${notify_msg}`
-                        });
-
-                        refresh_logs();
+                        await F_Save_Product(product);
+                        console.log(`[Job Manager] Analysis Completed -> Triggering SEO`);
                         return;
                     }
 
-                    // Increment Retry
-                    const new_retry = (product.retry_count || 0) + 1;
+                    // --- PHASE 3: LOCALIZED SEO ENGINE (Gemini 2.5 Flash) ---
+                    if (product.seo_status === 'pending') {
+                        // Dependency: Analysis
+                        if (product.analysis_status !== 'completed' && !product.front_analyse) return;
 
-                    // We need to persist this retry count.
-                    // Since F_Update_Product_Status refreshes from DB, we should update the DB with new retry count.
-                    // But F_Update_Product_Status doesn't expose retry_count arg.
-                    // So we must manually save the product with updated retry_count.
-                    // We need F_Save_Product.
-                    product.retry_count = new_retry;
-                    product.error_log = `Retry ${new_retry}: ${err_msg}`;
+                        // if (product.seo_status !== 'updating') {
+                        product.seo_status = 'updating';
+                        product.error_log = "Writing Localized Marketing Copy...";
+                        await F_Save_Product(product);
+                        // }
 
-                    if (new_retry >= 3) {
-                        product.status = 'exited';
-                        product.error_log = `Max Retries Exceeded: ${err_msg}`;
-                        F_Add_Error_Log({
-                            product_id: product.product_id,
-                            message: `Job Exited: ${err_msg}`
-                        });
+                        const { F_Generate_SEO_Content } = await import('../../services/gemini_service');
+
+                        // Inject Analysis into Context
+                        // We append analysis to the "raw_desc" or pass via context param?
+                        // F_Generate_SEO_Content takes 'product'. Let's update product.seo_context temporarily or permanently?
+                        // Interface has 'seo_context'.
+                        const richContext = `User Input: ${product.raw_desc}. \nVisual Analysis: ${product.front_analyse} ${product.back_analyse || ''}`;
+                        product.raw_desc = richContext; // Enriched context for SEO
+
+                        const lang = product.language_pref || F_Get_Language() || 'en';
+                        const result = await F_Generate_SEO_Content(product, lang as any);
+
+                        product.product_title = result.title;
+                        product.product_desc = result.description;
+                        product.seo_status = 'completed';
+
+                        // Trigger Next: Front Gen
+                        if (product.front_status !== 'completed') product.front_status = 'pending';
+
+                        await F_Save_Product(product);
+                        console.log(`[Job Manager] SEO Completed -> Triggering Front Gen`);
+                        return;
                     }
 
+                    // --- PHASE 4: PRIMARY VIEW SYNTHESIS (Gemini 3 Pro Preview) ---
+                    if (product.front_status === 'pending') {
+                        // Dependency: SEO (for context)
+                        if (product.seo_status !== 'completed') return;
+
+                        // if (product.front_status !== 'updating') {
+                        product.front_status = 'updating';
+                        product.error_log = "Synthesizing High-Fidelity Front View (Pro)...";
+                        await F_Save_Product(product);
+                        // }
+
+                        const { F_Generate_Pro_Image } = await import('../../services/gemini_service');
+
+                        // Construct Pro Prompt
+                        // "A detailed synthesis instruction using gender, model_age..."
+                        const prompt = `Hyper-realistic fashion photography. Full body shot. 
+                        Subject: ${product.age} year old ${product.gender ? 'Female' : 'Male'} model. 
+                        Body Type: ${product.vücut_tipi}. Fit: ${product.kesim}.
+                        Wearing: ${product.product_title}. 
+                        Details: ${product.front_analyse}. 
+                        Environment: ${product.background}. 
+                        Lighting: Professional Studio. 8k resolution.`;
+
+                        // Stage 4: Front Image Synthesis (Flash 2.5)
+                        let generated_image = await F_Generate_Pro_Image(prompt, product.raw_front);
+
+                        if (!generated_image) throw new Error("Pro Generation failed (Empty)");
+
+                        product.model_front = generated_image;
+                        product.front_status = 'completed';
+
+                        // Trigger Next: Back Gen
+                        if (product.back_status !== 'completed') product.back_status = 'pending';
+
+                        await F_Save_Product(product);
+                        console.log(`[Job Manager] Front Gen Completed -> Triggering Back Gen`);
+                        return;
+                    }
+
+                    // --- PHASE 5: CONSISTENT BACK VIEW SYNTHESIS ---
+                    if (product.back_status === 'pending') {
+                        if (!product.raw_back) {
+                            // Skip if no back image provided
+                            product.back_status = 'completed';
+                            await F_Save_Product(product);
+                            return;
+                        }
+
+                        // if (product.back_status !== 'updating') {
+                        product.back_status = 'updating';
+                        product.error_log = "Synthesizing Consistent Back View...";
+                        await F_Save_Product(product);
+                        // }
+
+                        const { F_Generate_Pro_Image } = await import('../../services/gemini_service');
+
+                        const prompt = `Back view of the same model. 
+                        Consistency: Match the front view model exactly.
+                        Wearing: ${product.product_title} (Back Side).
+                        Details: ${product.back_analyse}.
+                        Environment: Match front view.`;
+
+                        // Stage 5: Consistent Back View (Flash 2.5)
+                        const back_gen = await F_Generate_Pro_Image(prompt, product.raw_back, product.model_front);
+
+                        product.model_back = back_gen;
+                        product.back_status = 'completed';
+
+                        // FINALIZATION (Stage 5 finishes the job)
+                        console.log(`[Job Manager] Pipeline Finished for ${product.product_id}`);
+                        product.status = 'finished';
+                        product.video_status = 'completed'; // Skipped
+                        product.error_log = undefined;
+                        await F_Save_Product(product);
+                        return;
+                    }
+
+                    // Legacy Video Block Removed/Skipped
+
+
+                } catch (error: any) {
+                    console.error(`[Job Manager] Chain Failed:`, error);
+                    // Circuit Breaker Logic
+                    if (error.message?.includes("CIRCUIT_BREAKER")) {
+                        product.status = 'exited';
+                    } else {
+                        // For now, exit on any error to prevent loops in this strict pipeline
+                        product.status = 'exited';
+                    }
+                    product.error_log = `Pipeline Error: ${error.message}`;
+
+                    // Fail current step
+                    if (product.analysis_status === 'updating') product.analysis_status = 'failed';
+                    if (product.seo_status === 'updating') product.seo_status = 'failed';
+                    if (product.front_status === 'updating') product.front_status = 'failed';
+                    if (product.back_status === 'updating') product.back_status = 'failed';
+
                     await F_Save_Product(product);
-                    refresh_logs();
                 }
             });
         }, 5000); // Check every 5 seconds
+
 
         return () => clearInterval(interval);
     }, []);

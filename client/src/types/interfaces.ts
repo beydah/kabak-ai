@@ -14,6 +14,11 @@ export interface I_Product_Data {
     product_title?: string;
     product_desc?: string;
 
+    // Multimodal Analysis
+    front_analyse?: string;
+    back_analyse?: string;
+    language_pref?: string;
+
     // Attributes
     gender: boolean; // true = Female, false = Male (Assumption based on fashion default)
     age: string;     // User input
@@ -30,6 +35,13 @@ export interface I_Product_Data {
     status: ProductStatus;
     retry_count?: number;
     error_log?: string;
+
+    // Smart Sync Statuses
+    analysis_status?: 'pending' | 'updating' | 'completed' | 'failed'; // New Phase 2
+    seo_status?: 'pending' | 'updating' | 'completed' | 'failed';
+    front_status?: 'pending' | 'updating' | 'completed' | 'failed';
+    back_status?: 'pending' | 'updating' | 'completed' | 'failed';
+    video_status?: 'pending' | 'updating' | 'completed' | 'failed';
 }
 
 export interface I_Error_Log {
@@ -53,7 +65,10 @@ export enum Accessory {
     BAG = 'Çanta',
     HAT = 'Şapka',
     WATCH = 'Saat',
-    JEWELRY = 'Takı'
+    JEWELRY = 'Takı',
+    GLASSES = 'glasses', // Added for compatibility
+    WALLET = 'wallet', // Added for compatibility
+    CAR_KEY = 'car_key' // Added for compatibility
 }
 
 export enum BgOption {
@@ -62,7 +77,8 @@ export enum BgOption {
     LUXURY_CAFE = 'Lüks Kafe',
     ORANGE = 'Turuncu',
     BLACK = 'Siyah',
-    MINIMALIST = 'Minimalist'
+    MINIMALIST = 'Minimalist',
+    WHITE = 'Beyaz' // Added
 }
 
 export interface ProductInput {
@@ -72,8 +88,10 @@ export interface ProductInput {
     productFit: string; // Kesim
     backgroundColor: BgOption;
     accessory: Accessory;
+    raw_desc?: string; // Original user input
     frontImage: string; // Base64
     backImage: string; // Base64
+    seo_context?: string; // High-Fidelity Context
 }
 
 export interface ApiLog {

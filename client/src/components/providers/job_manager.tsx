@@ -74,8 +74,8 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                 }
 
                 try {
-                    // LOCK: Stop if finished or failed
-                    if (product.status === 'finished' || product.status === 'failed') return;
+                    // LOCK: Stop if finished, failed, or exited
+                    if (product.status === 'finished' || product.status === 'failed' || product.status === 'exited') return;
 
                     console.log(`[Job Manager] Processing Chain: ${product.product_id}`);
 
@@ -227,20 +227,16 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
 
                 } catch (error: any) {
                     console.error(`[Job Manager] Chain Failed:`, error);
-                    // Circuit Breaker Logic
-                    if (error.message?.includes("CIRCUIT_BREAKER")) {
-                        product.status = 'exited';
-                    } else {
-                        // For now, exit on any error to prevent loops in this strict pipeline
-                        product.status = 'exited';
-                    }
+
+                    product.status = 'failed'; // Use 'failed' to trigger the Lock next time
                     product.error_log = `Pipeline Error: ${error.message}`;
 
-                    // Fail current step
-                    if (product.analysis_status === 'updating') product.analysis_status = 'failed';
-                    if (product.seo_status === 'updating') product.seo_status = 'failed';
-                    if (product.front_status === 'updating') product.front_status = 'failed';
-                    if (product.back_status === 'updating') product.back_status = 'failed';
+                    // FAIL ALL STATUSES to leave the active filter
+                    if (product.analysis_status === 'updating' || product.analysis_status === 'pending') product.analysis_status = 'failed';
+                    if (product.seo_status === 'updating' || product.seo_status === 'pending') product.seo_status = 'failed';
+                    if (product.front_status === 'updating' || product.front_status === 'pending') product.front_status = 'failed';
+                    if (product.back_status === 'updating' || product.back_status === 'pending') product.back_status = 'failed';
+                    if (product.video_status === 'updating' || product.video_status === 'pending') product.video_status = 'failed';
 
                     await F_Save_Product(product);
                 }

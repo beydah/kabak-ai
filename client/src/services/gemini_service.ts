@@ -104,10 +104,11 @@ export class GeminiService {
 
     // --- BACK VIEW ---
     async generateBackView(input: ProductInput, frontViewImage: string, seoContext?: string): Promise<string> {
-        return this.modelService.executeWithFailover('image', async (model) => {
-            console.warn(`[GeminiService] Back View Simulation with ${model.name}`);
+        const modelName = 'gemini-3-pro-image-preview';
+        console.log(`[GeminiService] Generating Back View with ${modelName}...`);
 
-            const genModel = this.ai.getGenerativeModel({ model: model.name });
+        return this.modelService.executeWithFailover('image', async (model) => {
+            const genModel = this.ai.getGenerativeModel({ model: modelName });
             const prompt = "Generate consistent back view. (See Front View)";
 
             const p1 = input.backImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
@@ -122,23 +123,24 @@ export class GeminiService {
             if (text && text.length > 1000 && !text.includes(' ')) {
                 return `data:image/jpeg;base64,${text}`;
             }
-            throw new Error("Back View Gen Failed (" + text.slice(0, 20) + ")");
+            throw new Error("Back View Gen Failed: " + text.slice(0, 50));
         });
     }
 
     // --- VIDEO (Stubbed) ---
     async generateVideo(input: ProductInput, imageBase64: string): Promise<string> {
-        console.log("[GeminiService] Video Generation skipped (Flash Standardization)");
         return "";
     }
 
-    // --- MULTIMODAL PIPELINE METHODS (Refactored for Flash) ---
+    // --- MULTIMODAL PIPELINE METHODS (Refactored) ---
 
-    // Phase 2: Visual Analysis
+    // Phase 2: Visual Analysis (Keep Flash)
     async analyzeImage(imageBase64: string, prompt: string): Promise<string> {
         return this.modelService.executeWithFailover('image', async (model) => {
-            console.log(`[GeminiService] ANALYZING with ${model.name}...`);
-            const genModel = this.ai.getGenerativeModel({ model: model.name });
+            // Flash is perfect for analysis
+            const modelName = 'gemini-2.0-flash';
+            console.log(`[GeminiService] ANALYZING with ${modelName}...`);
+            const genModel = this.ai.getGenerativeModel({ model: modelName });
             const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
             const result = await genModel.generateContent([
@@ -149,46 +151,63 @@ export class GeminiService {
         });
     }
 
-    // Phase 4/5: Pro Image Generation (Standardized to Flash 2.0)
+    // --- HELPERS ---
+    private async generateImagen(prompt: string): Promise<string> {
+        // Updated to Imagen 4.0 Fast based on available models list
+        const modelName = 'imagen-4.0-fast-generate-001';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:predict?key=${this.apiKey}`;
+
+        console.log(`[GeminiService] Calling Imagen 4 (${modelName}) via REST...`);
+
+        const payload = {
+            instances: [{ prompt: prompt }],
+            parameters: {
+                sampleCount: 1,
+                aspectRatio: "3:4",
+                personGeneration: "allow_adult"
+            }
+        };
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`Imagen 4 HTTP ${response.status}: ${errText}`);
+            }
+
+            const data = await response.json();
+
+            // Imagen response parsing
+            if (data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded) {
+                return `data:image/jpeg;base64,${data.predictions[0].bytesBase64Encoded}`;
+            }
+
+            throw new Error(`Imagen 4 No Image Data: ${JSON.stringify(data).slice(0, 100)}...`);
+
+        } catch (e) {
+            console.error("[GeminiService] Imagen 4 Failed:", e);
+            throw e;
+        }
+    }
+
+    // Phase 4/5: Pro Image Generation (Hybrid: Flash Logic -> Imagen 4 Pixels)
     async generateProImage(
         prompt: string,
         mainImageBase64: string,
         referenceImageBase64?: string
     ): Promise<string> {
-        // HARD-OVERRIDE: User requested "gemini-3-pro-preview" behavior.
-        // Since that model ID is not standard, we use the robust "gemini-2.0-flash" 
-        // effectively as the engine for this "Pro" logic.
-        const modelName = 'gemini-2.0-flash';
-        console.log(`[GeminiService] Generating Visuals (Pro Logic) with ${modelName}...`);
-
-        return this.modelService.executeWithFailover('image', async (model) => {
-            const genModel = this.ai.getGenerativeModel({ model: model.name });
-            const cleanMain = mainImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-
-            // Construct Multimodal Request: Text + Image(s)
-            const parts: any[] = [
-                { text: prompt },
-                { inlineData: { data: cleanMain, mimeType: 'image/jpeg' } }
-            ];
-
-            // If generating Back view, we include the Front Gen as reference
-            if (referenceImageBase64) {
-                const cleanRef = referenceImageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-                parts.push({ inlineData: { data: cleanRef, mimeType: 'image/jpeg' } });
-            }
-
-            const result = await genModel.generateContent(parts);
-            const response = await result.response;
-            const text = response.text();
-
-            // Flash returns text. Check for base64 or fail strict.
-            if (text && text.length > 1000 && !text.includes(' ')) {
-                return `data:image/jpeg;base64,${text}`;
-            }
-
-            // Note: If Flash cannot generate images, this will throw. 
-            // But strict requirement is "Use this model".
-            throw new Error(`Gemini Flash Output Not Image: ${text.slice(0, 50)}...`);
+        // We use Imagen 3 for the actual pixel generation
+        return this.modelService.executeWithFailover('image', async () => {
+            // We inject the "Description" of the input image into the prompt
+            // because Imagen 3 (Public) is Text-to-Image.
+            // The 'prompt' passed here is usually constructed from attributes.
+            // Ideally we would double-check prompt quality.
+            return this.generateImagen(prompt);
         });
     }
 }

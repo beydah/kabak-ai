@@ -31,74 +31,93 @@ export class GeminiService {
         return instance;
     }
 
-    // --- CORE MULTIMODAL PIPELINE (Flash 2.5) ---
-    async generateProductOnModel(
-        input: ProductInput,
-        side: 'ön' | 'arka',
-        referenceModelImage?: string,
-        seoContext?: string,
-        viewTypeOverride?: 'front' | 'back'
-    ): Promise<string> {
-        // Redirect 'back' view generation
-        if ((side === 'arka' || viewTypeOverride === 'back') && referenceModelImage) {
-            return this.generateBackView(input, referenceModelImage, seoContext);
-        }
+    // --- GÖREV 1 & 2: GÖRSEL ÜRETİM (Gemini 3 Pro Image Preview) ---
+    async generateProductOnModel(input: ProductInput): Promise<string> {
+        const productBase64 = input.frontImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+        if (!productBase64) throw new Error("Input Image Missing");
 
-        // 1. PRE-PROCESSING
-        let productBase64 = side === 'ön' ? input.frontImage : input.backImage;
-        if (!productBase64) throw new Error("No Input Image");
-        const cleanBase64 = productBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+        const prompt = `Dress the mannequin with the garment from the provided raw_front_img file.
+        
+        MANDATORY CONFIGURATION:
+        - Gender: ${input.gender}
+        - Model Age: ${input.age}
+        - Body Type: ${input.fit}
+        - Product Fit: ${input.productFit}
+        - Background: ${input.backgroundColor}
+        - Accessory: ${input.accessory}
+        
+        CRITICAL OUTPUT INSTRUCTION:
+        1. Generate a photorealistic image of the model wearing this EXACT garment.
+        2. You MUST return the output as a binary image or a raw Base64 string.
+        3. DO NOT provide conversational text or descriptions.`;
 
-        // 2. PROMPT CONSTRUCTION
-        const viewType = viewTypeOverride || (side === 'arka' ? 'back' : 'front');
-        let prompt = F_Build_Structured_Prompt(input, seoContext, viewType);
-        prompt = prompt.replace(/model/gi, "subject").replace(/body type/gi, "physique");
+        return this.modelService.executeWithFailover('image', async () => {
+            console.log(`[GeminiService] VISUAL SYNTHESIS with models/gemini-3-pro-image-preview...`);
 
-        // 3. EXECUTION (Flash Only)
-        return this.modelService.executeWithFailover('image', async (model) => {
-            console.log(`[GeminiService] VISUAL SYNTHESIS with ${model.name}...`);
+            const genModel = this.ai.getGenerativeModel({ model: 'models/gemini-3-pro-image-preview' });
 
-            const genModel = this.ai.getGenerativeModel({ model: model.name });
             const result = await genModel.generateContent([
                 { text: prompt },
-                { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } }
+                { inlineData: { data: productBase64, mimeType: 'image/jpeg' } }
             ]);
 
             const response = await result.response;
-            const text = response.text();
 
-            if (text && text.length > 1000 && !text.includes(' ')) {
-                return `data:image/jpeg;base64,${text}`;
+            // 1. Check for Native Image Part (inlineData)
+            if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
+                const parts = result.response.candidates[0].content.parts;
+                const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+                if (imagePart && imagePart.inlineData) {
+                    return `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                }
             }
 
-            // Failing Check
-            throw new Error(`Gemini Flash returned Text (Not Image): "${text.slice(0, 50)}..."`);
+            // 2. Fallback: Check Text Output for Base64 (User's regex method)
+            let textOutput = "";
+            try { textOutput = response.text(); } catch (e) { /* Ignore if no text */ }
+
+            const base64Regex = /([A-Za-z0-9+/]{100,})/;
+            const match = textOutput.match(base64Regex);
+
+            if (match && match[0].length > 1000) {
+                return `data:image/jpeg;base64,${match[0]}`;
+            }
+
+            // Error Logging
+            throw new Error(`Gemini 3 Pro Refused/Returned Text: "${textOutput.slice(0, 500)}..."`);
         });
     }
 
-    // --- TEXT PIPELINE ---
-    async generateSEOContent(input: ProductInput, image: string, language: string = 'en'): Promise<{ title: string; description: string }> {
-        return this.modelService.executeWithFailover('text', async (model) => {
-            console.log(`[GeminiService] SEO GEN with ${model.name}`);
+    // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ ---
+    async generateSEOContent(input: ProductInput, lang: string = 'tr'): Promise<{ title: string; description: string }> {
+        return this.modelService.executeWithFailover('text', async () => {
             const genModel = this.ai.getGenerativeModel({
-                model: model.name, // Will be Flash
+                model: 'gemini-2.0-flash',
                 generationConfig: { responseMimeType: "application/json" }
             });
 
-            const cleanBase64 = image.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            const prompt = `ACT AS A SENIOR E-COMMERCE COPYWRITER.
-            INPUTS: Age: ${input.age}, Gender: ${input.gender}, Fit: ${input.fit}, Context: ${input.seo_context}
-            OUTPUT LANGUAGE: ${language}
-            TASK: Write product title and description.
-            OUTPUT JSON: {"title": "...", "description": "..."}`;
+            // Kullanıcı inputundan kritik bilgileri ayıkla (Beden, Marka, Ürün Tipi)
+            const rawDesc = input.seo_context || "";
+            const foundBrand = rawDesc.match(/(Marka|Brand):\s*([a-zA-Z0-9]+)/i)?.[2] || "";
+            const foundSize = rawDesc.match(/(Beden|Size|Ölçü):\s*([a-zA-Z0-9\s/]+)/i)?.[2] || "";
 
-            const result = await genModel.generateContent([
-                { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } },
-                { text: prompt }
-            ]);
+            const prompt = `Sen uzman bir E-ticaret SEO yazarıısın. 
+            
+            INPUT:
+            - Ham Açıklama: ${rawDesc}
+            - Kesim: ${input.productFit}
+            
+            KURALLAR:
+            1. Ürün Başlığı: Maksimum 5 kelime. Eğer ham açıklamada Marka (${foundBrand}), Beden (${foundSize}) veya Ürün Tipi (Tshirt, Kazak vb.) varsa MUTLAKA başlıkta geçmeli.
+            2. Ürün Açıklaması: Tam olarak 500 karakter civarında, tek paragraf.
+            3. Bilgi Koruma: Ham açıklamada geçen ölçü, beden ve marka bilgilerini ASLA silme, açıklamaya dahil et.
+            4. Stil: Paragraf içine 5 emoji dağıt, en sona 5 adet hashtag ekle.
+            
+            DİL: ${lang === 'tr' ? 'Türkçe' : 'English'}
+            FORMAT: JSON {"title": "...", "description": "..."}`;
 
-            const text = result.response.text();
-            try { return JSON.parse(text); } catch { return { title: "Error", description: text.slice(0, 100) }; }
+            const result = await genModel.generateContent(prompt);
+            return JSON.parse(result.response.text());
         });
     }
 
@@ -224,7 +243,7 @@ export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 't
         frontImage: p_product.raw_front,
         backImage: p_product.raw_back || ''
     };
-    const result = await service.generateSEOContent(input, p_product.raw_front, lang);
+    const result = await service.generateSEOContent(input, lang);
     return { title: result.title, description: result.description, tags: [] };
 };
 
@@ -240,7 +259,7 @@ export const F_Generate_Model_Image = async (p_product: I_Product_Data): Promise
         frontImage: p_product.raw_front,
         backImage: p_product.raw_back || ''
     };
-    return await service.generateProductOnModel(input, 'ön', undefined, p_product.raw_desc);
+    return await service.generateProductOnModel(input);
 };
 
 export const F_Generate_Video_Preview = async (p_product: I_Product_Data): Promise<string | null> => {

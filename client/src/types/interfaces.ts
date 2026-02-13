@@ -1,4 +1,4 @@
-export type ProductStatus = 'draft' | 'running' | 'finished' | 'exited';
+export type ProductStatus = 'draft' | 'running' | 'finished' | 'exited' | 'failed';
 
 export interface I_Product_Data {
     product_id: string; // Unique UUID

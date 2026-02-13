@@ -36,13 +36,16 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
             const products = await F_Get_All_Products();
 
             // Filter where status is 'running' OR any granular status is 'pending'/'updating'
+            // CRITICAL FIX: Strictly exclude 'failed' or 'exited' jobs to prevent infinite loops
             const active_products = products.filter(p =>
-                p.status === 'running' ||
-                p.analysis_status === 'pending' || p.analysis_status === 'updating' ||
-                p.seo_status === 'pending' || p.seo_status === 'updating' ||
-                p.front_status === 'pending' || p.front_status === 'updating' ||
-                p.back_status === 'pending' || p.back_status === 'updating' ||
-                p.video_status === 'pending' || p.video_status === 'updating'
+                (p.status !== 'failed' && p.status !== 'exited') && (
+                    p.status === 'running' ||
+                    p.analysis_status === 'pending' || p.analysis_status === 'updating' ||
+                    p.seo_status === 'pending' || p.seo_status === 'updating' ||
+                    p.front_status === 'pending' || p.front_status === 'updating' ||
+                    p.back_status === 'pending' || p.back_status === 'updating' ||
+                    p.video_status === 'pending' || p.video_status === 'updating'
+                )
             );
 
             active_products.forEach(async (product) => {
@@ -156,20 +159,11 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                         await F_Save_Product(product);
                         // }
 
-                        const { F_Generate_Pro_Image } = await import('../../services/gemini_service');
+                        const { F_Generate_Model_Image } = await import('../../services/gemini_service');
 
-                        // Construct Pro Prompt
-                        // "A detailed synthesis instruction using gender, model_age..."
-                        const prompt = `Hyper-realistic fashion photography. Full body shot. 
-                        Subject: ${product.age} year old ${product.gender ? 'Female' : 'Male'} model. 
-                        Body Type: ${product.vücut_tipi}. Fit: ${product.kesim}.
-                        Wearing: ${product.product_title}. 
-                        Details: ${product.front_analyse}. 
-                        Environment: ${product.background}. 
-                        Lighting: Professional Studio. 8k resolution.`;
-
-                        // Stage 4: Front Image Synthesis (Flash 2.5)
-                        let generated_image = await F_Generate_Pro_Image(prompt, product.raw_front);
+                        // Stage 4: High-Fidelity Front Image Synthesis (Gemini 1.5 Pro)
+                        // All prompt construction and model selection is now handled inside F_Generate_Model_Image -> generateProductOnModel
+                        let generated_image = await F_Generate_Model_Image(product);
 
                         if (!generated_image) throw new Error("Pro Generation failed (Empty)");
 

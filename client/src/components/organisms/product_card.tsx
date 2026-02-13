@@ -86,7 +86,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                         alt="front"
                         className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                             ${current_view === 'front' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
-                            ${(is_front_updating && current_view === 'front') ? 'animate-breathe opacity-90 blur-[2px]' : ''} 
+                            ${(is_front_updating && current_view === 'front') ? 'opacity-50 grayscale blur-md scale-105' : ''} 
                             ${(is_exited) ? 'blur-sm grayscale' : ''}
                         `}
                     />
@@ -119,34 +119,34 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                         />
                     )}
 
-                    {/* RUNNING STATE - Shimmer Animation */}
+                    {/* RUNNING STATE - New Animation (Gray Blur + Floating Orb) */}
                     {is_running && (
-                        <div className="absolute inset-0 z-20 pointer-events-auto flex items-center justify-center">
+                        <div className="absolute inset-0 z-20 pointer-events-auto flex items-center justify-center overflow-hidden">
+
+                            {/* Floating Pink-Orange Orb */}
+                            <div className="absolute w-40 h-40 bg-gradient-to-br from-pink-500/60 to-orange-500/60 rounded-full blur-3xl animate-float-random opacity-80 pointer-events-none mix-blend-screen" />
 
                             {/* CANCEL BUTTON (Top Right) */}
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation();
-                                    if (window.confirm(F_Get_Text('product.confirm_cancel') || "Cancel Job?")) {
+                                    if (window.confirm(F_Get_Text('product.confirm_cancel'))) {
                                         cancel_job(p_product.product_id);
                                     }
                                 }}
-                                className="absolute top-2 right-2 z-30 text-white/40 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-black/20"
-                                title="Cancel Job"
+                                className="absolute top-2 right-2 z-30 text-white/60 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-black/20"
+                                title={F_Get_Text('product.cancel_job')}
                             >
                                 <XCircle size={22} />
                             </button>
 
-                            {/* Shimmer Overlay */}
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent -translate-x-full animate-shimmer pointer-events-none" />
-
                             {/* Granular Status Text Overlay */}
-                            <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none">
-                                <span className="inline-block px-3 py-1 bg-black/60 backdrop-blur-md text-white text-xs rounded-full shadow-lg">
-                                    {is_seo_updating ? "Writing Copy..." :
-                                        is_front_updating ? "Generating Front..." :
-                                            is_back_updating ? "Synthesizing Back..." :
-                                                is_video_updating ? "Filming Video..." : "Processing..."}
+                            <div className="absolute bottom-4 left-0 right-0 text-center pointer-events-none z-30">
+                                <span className="inline-block px-3 py-1 bg-black/60 backdrop-blur-md text-white text-xs rounded-full shadow-lg border border-white/10">
+                                    {is_seo_updating ? F_Get_Text('product.status.writing_copy') :
+                                        is_front_updating ? F_Get_Text('product.status.gen_front') :
+                                            is_back_updating ? F_Get_Text('product.status.gen_back') :
+                                                is_video_updating ? F_Get_Text('product.status.filming') : F_Get_Text('product.status.processing')}
                                 </span>
                             </div>
                         </div>
@@ -158,14 +158,14 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                             <button
                                 onClick={F_Handle_Retry}
                                 className="p-3 bg-white/90 hover:bg-white text-black rounded-full transition-all shadow-xl hover:scale-105"
-                                title="Retry Generation"
+                                title={F_Get_Text('product.retry_gen')}
                             >
                                 <RotateCcw size={20} />
                             </button>
                             <button
                                 onClick={F_Request_Delete}
                                 className="p-3 bg-red-600/90 hover:bg-red-600 text-white rounded-full transition-all shadow-xl hover:scale-105"
-                                title="Delete Product"
+                                title={F_Get_Text('product.delete_product')}
                             >
                                 <Trash2 size={20} />
                             </button>
@@ -177,7 +177,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                         <>
                             {/* View Navigation (Left/Right) */}
                             {has_back_image && (
-                                <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-between px-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-between px-2 transition-opacity duration-300">
                                     <button
                                         onClick={F_Toggle_View}
                                         className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
@@ -213,14 +213,14 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                 {/* Content */}
                 <div className="p-4 relative">
                     <p className="font-medium text-text-light dark:text-text-dark truncate">
-                        {is_seo_updating ? "Writing Optimization..." : (p_product.product_title || `ID: ${(p_product.product_id || "").substring(0, 8)}...`)}
+                        {is_seo_updating ? F_Get_Text('product.status.writing_opt') : (p_product.product_title || `ID: ${(p_product.product_id || "").substring(0, 8)}...`)}
                     </p>
                     <p className="text-sm text-secondary truncate mt-1">
-                        {is_seo_updating ? "Analyzing trends..." : (p_product.product_desc || p_product.raw_desc || 'No description').substring(0, 80)}
+                        {is_seo_updating ? F_Get_Text('product.status.analyzing') : (p_product.product_desc || p_product.raw_desc || F_Get_Text('common.no_desc')).substring(0, 80)}
                     </p>
                     <div className="flex items-center justify-between mt-2">
                         <p className="text-xs text-secondary/60">
-                            {p_product.created_at ? new Date(p_product.created_at).toLocaleDateString() : 'Just now'}
+                            {p_product.created_at ? new Date(p_product.created_at).toLocaleDateString() : F_Get_Text('common.just_now')}
                         </p>
                     </div>
                 </div>

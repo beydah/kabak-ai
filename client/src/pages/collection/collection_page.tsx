@@ -164,19 +164,6 @@ export const F_Collection_Page: React.FC = () => {
 
                     <div className="flex items-center gap-4">
                         <F_Button
-                            p_label="Clear All Data"
-                            p_on_click={async () => {
-                                if (confirm("RESET SYSTEM? This will delete all products, drafts, and settings.")) {
-                                    localStorage.clear();
-                                    const products = await F_Get_All_Products();
-                                    for (const p of products) await F_Delete_Product_By_Id(p.product_id);
-                                    window.location.reload();
-                                }
-                            }}
-                            p_variant="secondary"
-                            p_class_name="bg-red-50 text-red-600 hover:bg-red-100 border-red-200"
-                        />
-                        <F_Button
                             p_label={F_Get_Text('collection.create_new')}
                             p_on_click={() => navigate('/new-product')}
                         />

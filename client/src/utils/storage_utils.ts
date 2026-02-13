@@ -181,6 +181,24 @@ export const F_Remove_Draft_Image = async (key: string) => {
     await DB_Service.saveDraft(key, null);
 };
 
+// SETTINGS / DEFAULTS OPERATIONS (ASYNC - IndexedDB)
+export const F_Save_Start_Defaults = async (defaults: any) => {
+    try {
+        await DB_Service.saveStartDefaults(defaults);
+    } catch (e) {
+        console.error("Failed to save start defaults:", e);
+    }
+};
+
+export const F_Get_Start_Defaults = async <T>(): Promise<T | null> => {
+    try {
+        return await DB_Service.getStartDefaults<T>();
+    } catch (e) {
+        console.error("Failed to get start defaults:", e);
+        return null;
+    }
+};
+
 // ERROR LOG OPERATIONS (ASYNC - IndexedDB)
 // ERROR LOG OPERATIONS (ASYNC - IndexedDB)
 
@@ -270,4 +288,22 @@ export const F_Get_Preference = (p_key: 'theme' | 'lang' | 'app_currency'): stri
     if (p_key === 'lang') ls_key = STORAGE_KEY_LANG;
 
     return localStorage.getItem(ls_key);
+};
+
+export const F_Reset_Model_Usage = async (model_id: string) => {
+    try {
+        await DB_Service.deleteMetric(model_id);
+        F_Notify_Table();
+    } catch (e) {
+        console.error("[Storage] Failed to reset model usage:", e);
+    }
+};
+
+export const F_Clear_All_Stats = async () => {
+    try {
+        await DB_Service.clearMetrics();
+        F_Notify_Table();
+    } catch (e) {
+        console.error("[Storage] Failed to clear all stats:", e);
+    }
 };

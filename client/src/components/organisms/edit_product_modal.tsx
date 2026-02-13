@@ -49,7 +49,7 @@ export const F_Edit_Product_Modal: React.FC<Edit_Product_Modal_Props> = ({
 
         } catch (error) {
             console.error("Error updating product:", error);
-            alert("Failed to update product.");
+            alert(F_Get_Text('common.error'));
         }
     };
 

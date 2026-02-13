@@ -106,18 +106,8 @@ export const F_Header: React.FC<Header_Props> = ({
                 {/* Desktop Nav Items (Middle) */}
                 <nav className="hidden md:flex items-center gap-6">
                     {p_is_authenticated ? (
-                        app_nav_items.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className={`text-sm font-medium transition-colors ${location.pathname === item.path
-                                    ? 'text-primary'
-                                    : 'text-text-light dark:text-text-dark hover:text-primary'
-                                    }`}
-                            >
-                                {item.label}
-                            </Link>
-                        ))
+                        // Auth Nav Items removed as requested
+                        null
                     ) : (
                         landing_nav_items.map((item) => (
                             <button
@@ -165,16 +155,8 @@ export const F_Header: React.FC<Header_Props> = ({
                                 {/* Mobile-Only Links (Duplicate of main nav for small screens) */}
                                 <div className="md:hidden flex flex-col gap-1 border-b border-secondary/10 pb-2 mb-2">
                                     {p_is_authenticated ? (
-                                        app_nav_items.map((item) => (
-                                            <Link
-                                                key={item.path}
-                                                to={item.path}
-                                                onClick={() => set_is_menu_open(false)}
-                                                className="px-3 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-secondary/10 rounded-lg"
-                                            >
-                                                {item.label}
-                                            </Link>
-                                        ))
+                                        // Mobile Auth Nav Items removed
+                                        null
                                     ) : (
                                         <>
                                             {landing_nav_items.map((item) => (

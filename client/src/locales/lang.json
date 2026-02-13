@@ -200,22 +200,6 @@
             },
             "generate_button": "Ürün Oluştur"
         },
-        "product": {
-            "title": "Ürün Detayı",
-            "download": "İndir",
-            "edit": "Düzenle",
-            "delete": "Sil",
-            "save_changes": "Değişiklikleri Kaydet",
-            "cancel": "İptal",
-            "confirm_delete_title": "Ürünü Sil",
-            "confirm_delete_message": "Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
-            "delete_confirm_button": "Evet, Sil",
-            "edit_modal_title": "Ürünü Düzenle",
-            "update_success": "Ürün başarıyla güncellendi.",
-            "delete_success": "Ürün başarıyla silindi.",
-            "next_image": "Sonraki Görsel",
-            "prev_image": "Önceki Görsel"
-        },
         "pricing": {
             "title": "Dinamik Fiyatlandırma",
             "estimated_cost": "Tahmini Maliyet",
@@ -232,20 +216,6 @@
                 "request_installation": "Kurulum Talep Edin"
             }
         },
-        "common": {
-            "loading": "Yükleniyor...",
-            "error": "Bir hata oluştu.",
-            "success": "İşlem başarılı.",
-            "search_placeholder": "Ürünlerde ara..."
-        },
-        "notifications": {
-            "title": "Bildirimler",
-            "empty": "Yeni bildirim yok.",
-            "clear_all": "Tümünü Temizle",
-            "copy_all": "Tümünü Kopyala",
-            "copied": "Kopyalandı",
-            "processing_failed": "İşlem Başarısız"
-        },
         "analytics": {
             "title": "Kullanım Analizi",
             "view_daily": "Günlük",
@@ -256,14 +226,77 @@
             "requests_per_day": "Günlük İstek Limiti (RPD)",
             "usage": "Kullanım",
             "limit_reached": "Günlük limit aşıldı!",
-            "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!"
+            "empty_state": "Henüz kullanım verisi yok. Analizleri görmek için ürün oluşturun!",
+            "delete_model": "Model Verilerini Sıfırla",
+            "reset_all": "Tüm Verileri Sıfırla",
+            "confirm_reset_title": "Analiz Verilerini Sıfırla",
+            "confirm_reset_message": "Tüm kullanım verilerini ve maliyet hesaplamalarını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+        },
+        "product": {
+            "title": "Ürün Detayı",
+            "download": "İndir",
+            "edit": "Düzenle",
+            "delete": "Sil",
+            "retry": "Yeniden Dene",
+            "save_changes": "Değişiklikleri Kaydet",
+            "cancel": "İptal",
+            "confirm_delete_title": "Ürünü Sil",
+            "confirm_delete_message": "Bu ürünü silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.",
+            "delete_confirm_button": "Evet, Sil",
+            "edit_modal_title": "Ürünü Düzenle",
+            "update_success": "Ürün başarıyla güncellendi.",
+            "delete_success": "Ürün başarıyla silindi.",
+            "next_image": "Sonraki Görsel",
+            "prev_image": "Önceki Görsel",
+            "confirm_cancel": "İşlemi iptal etmek istediğinize emin misiniz?",
+            "cancel_job": "İşlemi İptal Et",
+            "retry_gen": "Yeniden Dene",
+            "delete_product": "Ürünü Sil",
+            "download_video": "Video İndir (MP4)",
+            "status": {
+                "writing_copy": "Metin Yazılıyor...",
+                "gen_front": "Ön Taraf Üretiliyor...",
+                "gen_back": "Arka Taraf Üretiliyor...",
+                "filming": "Video Çekiliyor...",
+                "processing": "İşleniyor...",
+                "analyzing": "Analiz ediliyor...",
+                "writing_opt": "Optimizasyon Yazılıyor..."
+            },
+            "create_video": "Video Oluştur"
+        },
+        "notifications": {
+            "title": "Bildirimler",
+            "empty": "Yeni bildirim yok",
+            "clear_all": "Tümünü Temizle",
+            "copy_all": "Hata Kayıtlarını Kopyala",
+            "copied": "Kopyalandı!",
+            "processing_failed": "İşlem Başarısız"
+        },
+        "settings": {
+            "title": "Ayarlar",
+            "language": "Dil / Language",
+            "theme": "Tema Değiştir"
+        },
+        "common": {
+            "loading": "Yükleniyor...",
+            "error": "Bir hata oluştu.",
+            "success": "İşlem başarılı.",
+            "search_placeholder": "Ürünlerde ara...",
+            "confirm": "Onayla",
+            "yes": "Evet",
+            "no": "Hayır",
+            "just_now": "Az önce",
+            "no_desc": "Açıklama yok"
         },
         "filters": {
-            "search_placeholder": "Ürünlerde ara...",
-            "toggle": "Filtreler",
+            "toggle": "Filtrele",
             "clear": "Temizle",
             "gender": {
                 "label": "Cinsiyet",
+                "all": "Tümü"
+            },
+            "age_range": {
+                "label": "Yaş Aralığı",
                 "all": "Tümü"
             },
             "status": {
@@ -271,225 +304,46 @@
                 "all": "Tümü",
                 "finished": "Tamamlandı",
                 "running": "İşleniyor",
-                "exited": "Hata/İptal"
-            },
-            "age_range": {
-                "label": "Yaş Aralığı",
-                "all": "Tümü"
+                "exited": "Hata"
             },
             "sort": {
                 "label": "Sıralama",
                 "newest": "En Yeni",
                 "oldest": "En Eski"
             }
+        },
+        "storage": {
+            "title": "Depolama Yönetimi",
+            "usage": "Depolama Kullanımı",
+            "used": "Kullanıldı",
+            "idb": "IndexedDB",
+            "local": "Yerel Hafıza",
+            "items": "Veritabanı Öğeleri",
+            "products": "Ürünler",
+            "products_desc": "Görseller & Veriler",
+            "drafts": "Taslaklar",
+            "drafts_desc": "Kaydedilmemiş Çalışmalar",
+            "settings": "Yerel Ayarlar",
+            "app_settings": "Uygulama Ayarları",
+            "app_settings_desc": "Tema, Dil, Varsayılanlar",
+            "item_count": "{count} Öğe",
+            "clear_modal": {
+                "title": "Depolamayı Temizle?",
+                "message": "{target} verisini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz."
+            },
+            "actions": {
+                "clear": "Temizle",
+                "reset": "Uygulamayı Sıfırla"
+            }
         }
     },
     "en": {
-        "app_name": "Kabak AI",
-        "nav": {
-            "home": "Home",
-            "about": "About Us",
-            "ai_models": "AI Models",
-            "open_source": "Open Source",
-            "contact": "Contact",
-            "contact_email": "info.beydahsaglam@gmail.com",
-            "login": "Login",
-            "collection": "Collection",
-            "new_product": "New Product",
-            "logout": "Logout"
-        },
-        "hero": {
-            "title": "Revolutionize Product Photography with AI",
-            "subtitle": "Transform your clothing products into professional studio-quality visuals. Model selection, background changes, and promotional videos - all powered by AI, in seconds.",
-            "cta_primary": "Try for Free",
-            "cta_secondary": "How It Works"
-        },
-        "features": {
-            "title": "AI-Powered Features",
-            "subtitle": "Smart, scalable tools that grow your e-commerce business",
-            "items": {
-                "mannequin": {
-                    "title": "Smart Mannequin System",
-                    "description": "Showcase your products with optimized mannequins based on gender, age, body type, and product fit"
-                },
-                "background": {
-                    "title": "Dynamic Background Engine",
-                    "description": "Studio, café, urban scenery, or custom environments - change backgrounds with one click"
-                },
-                "video": {
-                    "title": "Automated Video Production",
-                    "description": "Automatically generate professional-quality promotional videos for your products"
-                },
-                "accessories": {
-                    "title": "Smart Accessory Integration",
-                    "description": "Naturally integrate sunglasses, bags, jewelry, and more into your visuals with AI"
-                }
-            }
-        },
-        "about": {
-            "title": "About Us",
-            "subtitle": "Redefining visual production for e-commerce",
-            "description": "Kabak AI is an artificial intelligence platform that enables fashion and clothing brands to reduce studio costs by up to 80%, accelerate production time by 10x, and democratize professional quality. Powered by Google Gemini infrastructure, our system transforms raw product photos into sales-focused visuals.",
-            "stats": {
-                "cost_reduction": "80% Cost Savings",
-                "time_saved": "10x Faster Production",
-                "quality": "Studio Quality"
-            }
-        },
-        "ai_models": {
-            "title": "AI Infrastructure & Pricing",
-            "subtitle": "Transparent and scalable infrastructure powered by modern Gemini models",
-            "table": {
-                "use_case": "Use Case",
-                "primary": "Primary Model",
-                "fallback": "Fallback Model",
-                "cost": "Avg. Cost*",
-                "description": "Description"
-            },
-            "items": {
-                "text": {
-                    "use_case": "Text & SEO",
-                    "primary": "Gemini 3 Flash",
-                    "fallback": "Gemini 2.0 Flash",
-                    "cost": "~$0.01 / product",
-                    "description": "Product descriptions, meta tags, and SEO optimization"
-                },
-                "image_analysis": {
-                    "use_case": "Image Analysis",
-                    "primary": "Gemini 3 Flash",
-                    "fallback": "Gemini 2.0 Pro",
-                    "cost": "~$0.03 / product",
-                    "description": "Product recognition, color/pattern analysis"
-                },
-                "image_gen": {
-                    "use_case": "Image Generation",
-                    "primary": "Gemini 3 Pro",
-                    "fallback": "Imagen 3",
-                    "cost": "~$0.15 / image",
-                    "description": "High-fidelity mannequin and background generation"
-                },
-                "video": {
-                    "use_case": "Video Generation",
-                    "primary": "Veo 3",
-                    "fallback": "Veo 2",
-                    "cost": "~$0.80 / video",
-                    "description": "Cinematic product promotional videos"
-                }
-            },
-            "pricing_note": "*Costs are per single generation and estimated based on Google Cloud API pricing."
-        },
-        "open_source": {
-            "title": "Open Source & Community",
-            "subtitle": "A platform growing through transparency and collaboration",
-            "description": "Kabak AI is fully open source. You can review our codebase, contribute, or build your own version. We believe AI systems should be transparent.",
-            "github_button": "View on GitHub",
-            "license": "Released under MIT License",
-            "cta": "Need help with installation or integration?",
-            "cta_button": "Get Support"
-        },
-        "contact": {
-            "title": "Contact",
-            "subtitle": "Have questions? Get in touch",
-            "contact_email": "info.beydahsaglam@gmail.com",
-            "email_label": "Email",
-            "phone_label": "Phone",
-            "social_label": "Social Media & Links",
-            "cta": "Need a custom solution for your project?",
-            "cta_button": "Contact Us",
-            "links": {
-                "github_personal": "GitHub (Personal)",
-                "github_brand": "GitHub (Kabak AI)",
-                "linkedin": "LinkedIn",
-                "youtube": "YouTube",
-                "website": "Website"
-            }
-        },
-        "footer": {
-            "copyright": "© 2026 Kabak AI. All rights reserved.",
-            "made_with": "Made with ❤️ in Turkey",
-            "creator": "Developed by Beydah Sağlam"
-        },
-        "login": {
-            "title": "Login",
-            "username_placeholder": "Username",
-            "password_placeholder": "Password",
-            "submit_button": "Login",
-            "invalid_credentials": "Invalid username or password.",
-            "account_locked": "Your account is temporarily locked.",
-            "try_again_after": "You can try again after:",
-            "contact_prompt": "If you want to become a user, please",
-            "contact_link": "contact us"
-        },
-        "collection": {
-            "title": "Collection",
-            "empty_state": "No collections yet",
-            "create_new": "New Product"
-        },
-        "new_product": {
-            "title": "New Product Entry",
-            "back_to_collection": "← Back to Collection",
-            "upload": {
-                "front": "Front Photo",
-                "back": "Back Photo",
-                "select_file": "Select File",
-                "click_to_upload": "Click or Drag to Upload",
-                "change_photo": "Change Photo",
-                "file_format": "JPG, PNG, WEBP, SVG",
-                "error_type": "Invalid file type."
-            },
-            "validation": {
-                "required_all": "Please fill in all fields.",
-                "required_images": "Please upload both front and back photos."
-            },
-            "labels": {
-                "gender": "Gender",
-                "body_type": "Model Body Type",
-                "fit": "Product Fit",
-                "background": "Background",
-                "accessory": "Accessory",
-                "age": "Model Age",
-                "description": "Product Description"
-            },
-            "options": {
-                "gender": {
-                    "female": "Female",
-                    "male": "Male"
-                },
-                "body_type": {
-                    "slim": "Slim",
-                    "average": "Average",
-                    "plus_size": "Plus-Size"
-                },
-                "fit": {
-                    "slim": "Slim Fit",
-                    "regular": "Regular Fit",
-                    "oversized": "Oversized"
-                },
-                "background": {
-                    "black": "Black",
-                    "white": "White",
-                    "orange": "Orange",
-                    "cafe": "Café",
-                    "urban": "Urban"
-                },
-                "accessory": {
-                    "none": "None",
-                    "bag": "Bag",
-                    "glasses": "Glasses",
-                    "wallet": "Wallet",
-                    "car_key": "Maserati Key"
-                }
-            },
-            "placeholders": {
-                "description": "Enter product details here..."
-            },
-            "generate_button": "Create Product"
-        },
         "product": {
             "title": "Product Detail",
             "download": "Download",
             "edit": "Edit",
             "delete": "Delete",
+            "retry": "Retry",
             "save_changes": "Save Changes",
             "cancel": "Cancel",
             "confirm_delete_title": "Delete Product",
@@ -499,56 +353,56 @@
             "update_success": "Product updated successfully.",
             "delete_success": "Product deleted successfully.",
             "next_image": "Next Image",
-            "prev_image": "Previous Image"
+            "prev_image": "Previous Image",
+            "confirm_cancel": "Are you sure you want to cancel the job?",
+            "cancel_job": "Cancel Job",
+            "retry_gen": "Retry Generation",
+            "delete_product": "Delete Product",
+            "download_video": "Download Video",
+            "status": {
+                "writing_copy": "Writing Copy...",
+                "gen_front": "Generating Front...",
+                "gen_back": "Synthesizing Back...",
+                "filming": "Filming Video...",
+                "processing": "Processing...",
+                "analyzing": "Analyzing trends...",
+                "writing_opt": "Writing Optimization..."
+            },
+            "create_video": "Create Video"
         },
-        "pricing": {
-            "title": "Dynamic Pricing",
-            "estimated_cost": "Estimated Cost",
-            "simulation_note": "Costs calculated based on average usage.",
-            "reset": "Reset Simulation",
-            "product_bundle": "Product Bundle",
-            "bundles_subtext": "Product Bundles",
-            "add_product": "Add Product",
-            "remove_product": "Remove Product",
-            "bundle_desc": "1 Text + 4 Images + 1 Video"
+        "notifications": {
+            "title": "Notifications",
+            "empty": "No new notifications",
+            "clear_all": "Clear All",
+            "copy_all": "Copy Error Logs",
+            "copied": "Copied!",
+            "processing_failed": "Processing Failed"
         },
-        "home": {
-            "cta": {
-                "request_installation": "Request Installation"
-            }
+        "settings": {
+            "title": "Settings",
+            "language": "Language / Dil",
+            "theme": "Toggle Theme"
         },
         "common": {
             "loading": "Loading...",
             "error": "An error occurred.",
             "success": "Success.",
-            "search_placeholder": "Search products..."
-        },
-        "notifications": {
-            "title": "Notifications",
-            "empty": "No new notifications.",
-            "clear_all": "Clear All",
-            "copy_all": "Copy All",
-            "copied": "Copied",
-            "processing_failed": "Processing Failed"
-        },
-        "analytics": {
-            "title": "Usage Analytics",
-            "view_daily": "Daily",
-            "view_weekly": "Weekly",
-            "view_monthly": "Monthly",
-            "total_requests": "Total Requests",
-            "estimated_cost": "Estimated Cost",
-            "requests_per_day": "Requests Per Day (RPD)",
-            "usage": "Usage",
-            "limit_reached": "Daily limit reached!",
-            "empty_state": "No usage data recorded yet. Generate some products to see analytics!"
+            "search_placeholder": "Search products...",
+            "confirm": "Confirm",
+            "yes": "Yes",
+            "no": "No",
+            "just_now": "Just now",
+            "no_desc": "No description"
         },
         "filters": {
-            "search_placeholder": "Search products...",
             "toggle": "Filters",
             "clear": "Clear",
             "gender": {
                 "label": "Gender",
+                "all": "All"
+            },
+            "age_range": {
+                "label": "Age Range",
                 "all": "All"
             },
             "status": {
@@ -556,25 +410,37 @@
                 "all": "All",
                 "finished": "Finished",
                 "running": "Running",
-                "exited": "Error/Exited"
-            },
-            "age_range": {
-                "label": "Age Range",
-                "all": "All"
+                "exited": "Failed"
             },
             "sort": {
                 "label": "Sort By",
-                "newest": "Newest First",
-                "oldest": "Oldest First"
+                "newest": "Newest",
+                "oldest": "Oldest"
             }
         },
-        "settings": {
-            "title": "Settings",
-            "language": "Language",
-            "theme": "Theme",
-            "theme_light": "Light",
-            "theme_dark": "Dark",
-            "save": "Save"
+        "storage": {
+            "title": "Storage Management",
+            "usage": "Storage Usage",
+            "used": "Used",
+            "idb": "IndexedDB",
+            "local": "LocalStorage",
+            "items": "Database Items",
+            "products": "Products",
+            "products_desc": "Images & Metadata",
+            "drafts": "Drafts",
+            "drafts_desc": "Unsaved Work",
+            "settings": "Local Settings",
+            "app_settings": "App Settings",
+            "app_settings_desc": "Theme, Lang, Defaults",
+            "item_count": "{count} Item(s)",
+            "clear_modal": {
+                "title": "Clear Storage?",
+                "message": "Are you sure you want to clear {target}? This action cannot be undone."
+            },
+            "actions": {
+                "clear": "Clear",
+                "reset": "Reset Application"
+            }
         }
     }
 }

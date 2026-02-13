@@ -5,28 +5,46 @@ import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 import { F_Product_Form } from '../../components/organisms/product_form';
-import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft, F_Remove_Draft_Image } from '../../utils/storage_utils';
+import { F_Save_Product, I_Product_Data, F_Save_Draft, F_Get_Draft, F_Clear_Draft, F_Remove_Draft_Image, F_Get_Start_Defaults, F_Save_Start_Defaults } from '../../utils/storage_utils';
 import { F_File_To_Base64 } from '../../utils/file_utils';
-import { F_Save_Product_Preferences, F_Get_Product_Preferences } from '../../utils/cookie_utils';
 
 export const F_New_Product_Page: React.FC = () => {
     const navigate = useNavigate();
     const [initial_data, set_initial_data] = React.useState<Partial<I_Product_Data> | undefined>(undefined);
     const [is_loading, set_is_loading] = React.useState(true);
 
-    // Initial Data Logic (Draft vs Cookies vs Empty) - ASYNC
+    // Initial Data Logic (Draft vs IndexedDB Defaults vs Hardcoded)
     useEffect(() => {
         const load = async () => {
             try {
+                // 1. Check for Draft
                 const draft = await F_Get_Draft();
                 if (draft) {
                     set_initial_data(draft);
                 } else {
-                    const cookies = F_Get_Product_Preferences();
-                    set_initial_data(cookies);
+                    // 2. Check for IndexedDB Defaults
+                    const defaults = await F_Get_Start_Defaults<Partial<I_Product_Data>>();
+                    if (defaults) {
+                        set_initial_data(defaults);
+                    } else {
+                        // 3. Hardcoded Defaults (First Run)
+                        // Gender=Female (true), Age=30, Body=Average, Fit=Regular, BG=Orange, Acc=None
+                        const hardcoded: Partial<I_Product_Data> = {
+                            gender: true, // Female
+                            age: '30',
+                            vücut_tipi: 'average',
+                            kesim: 'regular',
+                            background: 'orange',
+                            aksesuar: 'none'
+                        };
+                        set_initial_data(hardcoded);
+                        // Save these immediately so next time they exist? 
+                        // Or wait for user to save? User request implies "if first time... varsayilanlar eklenecek".
+                        await F_Save_Start_Defaults(hardcoded);
+                    }
                 }
             } catch (e) {
-                console.error("Failed to load draft", e);
+                console.error("Failed to load initial data", e);
             } finally {
                 set_is_loading(false);
             }
@@ -44,19 +62,6 @@ export const F_New_Product_Page: React.FC = () => {
             const front_b64 = p_front_file ? await F_File_To_Base64(p_front_file) : (p_data.raw_front || '');
             const back_b64 = p_back_file ? await F_File_To_Base64(p_back_file) : (p_data.raw_back || '');
 
-            // SMART DEFAULTS & LOGIC
-            const cookies = F_Get_Product_Preferences();
-
-            // Gender Logic: Prefer Form Data -> Cookie -> Default (Female/True)
-            let final_gender = true; // Default
-
-            if (p_data.gender !== undefined) {
-                final_gender = p_data.gender;
-            } else if (cookies.gender !== undefined) {
-                // Cookies store as string "true"/"false"
-                final_gender = String(cookies.gender) === 'true';
-            }
-
             // Ensure all required fields for I_Product_Data are present
             const new_product: I_Product_Data = {
                 product_id: uuidv4(),
@@ -65,32 +70,37 @@ export const F_New_Product_Page: React.FC = () => {
                 raw_front: front_b64,
                 raw_back: back_b64,
 
-                // Strict Gender
-                gender: final_gender,
-
-                // Smart Fallbacks
-                age: p_data.age || cookies.age || '30',
-                vücut_tipi: p_data.vücut_tipi || cookies.body_type || 'average',
-                kesim: p_data.kesim || cookies.fit || 'regular',
-                background: p_data.background || cookies.background || 'orange',
-                aksesuar: p_data.aksesuar || cookies.accessory || 'none',
+                // Use form data or defaults
+                gender: p_data.gender !== undefined ? p_data.gender : true,
+                age: p_data.age || '30',
+                vücut_tipi: p_data.vücut_tipi || 'average',
+                kesim: p_data.kesim || 'regular',
+                background: p_data.background || 'orange',
+                aksesuar: p_data.aksesuar || 'none',
 
                 raw_desc: p_data.raw_desc || '',
                 status: 'running',
                 retry_count: 0
             };
 
-            // VALIDATION: Ensure Data Integrity
+            // VALIDATION
             if (!new_product.product_id) throw new Error("ID Generation Failed");
-            if (new_product.gender === undefined) new_product.gender = true;
 
             // 1. Save Product
             await F_Save_Product(new_product);
 
-            // 2. Save Preferences (Cookies)
-            F_Save_Product_Preferences(p_data);
+            // 2. Update Defaults in IndexedDB (User Request: "new-product bilgileri doldurulan ilgili kısımlarla güncellenecek")
+            const new_defaults = {
+                gender: new_product.gender,
+                age: new_product.age,
+                vücut_tipi: new_product.vücut_tipi,
+                kesim: new_product.kesim,
+                background: new_product.background,
+                aksesuar: new_product.aksesuar
+            };
+            await F_Save_Start_Defaults(new_defaults);
 
-            // 3. Clear Draft (Async)
+            // 3. Clear Draft
             await F_Clear_Draft();
             await F_Remove_Draft_Image('kabak_draft_img_front');
             await F_Remove_Draft_Image('kabak_draft_img_back');
@@ -104,7 +114,6 @@ export const F_New_Product_Page: React.FC = () => {
     };
 
     const F_Handle_Draft_Update = async (data: Partial<I_Product_Data>) => {
-        // Fire and forget or simple catch
         try {
             await F_Save_Draft(data);
         } catch (e) {

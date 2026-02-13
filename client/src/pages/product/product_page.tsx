@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Edit2, Trash2, ChevronLeft, ChevronRight, Copy, Check } from 'lucide-react';
+import { Edit2, Trash2, ChevronLeft, ChevronRight, Copy, Check, RotateCcw, Download, Video } from 'lucide-react';
 import { F_Main_Template } from '../../components/templates/main_template';
 import { F_Text } from '../../components/atoms/text';
 import { F_Button } from '../../components/atoms/button';
@@ -16,7 +16,7 @@ export const F_Product_Page: React.FC = () => {
     const [copied_field, set_copied_field] = useState<string | null>(null);
 
     // State for image switcher
-    const [active_image, set_active_image] = useState<'model_front' | 'model_back' | 'raw_front' | 'raw_back'>('raw_front');
+    const [active_image, set_active_image] = useState<'model_front' | 'model_back' | 'video'>('model_front');
 
     // Modals
     const [is_edit_modal_open, set_is_edit_modal_open] = useState(false);
@@ -31,20 +31,18 @@ export const F_Product_Page: React.FC = () => {
             const data = await F_Get_Product_By_Id(id);
             if (data) {
                 set_product(data);
-                // Priority: Model Front > Model Back > Raw Front
+                // Priority: Model Front > Video
                 if (data.model_front) set_active_image('model_front');
-                else if (data.model_back) set_active_image('model_back');
-                else set_active_image('raw_front');
+                else set_active_image('video');
             }
         }
     };
 
-    const F_Get_Image_Order = (): ('model_front' | 'model_back' | 'raw_front' | 'raw_back')[] => {
-        const order: ('model_front' | 'model_back' | 'raw_front' | 'raw_back')[] = [];
+    const F_Get_Image_Order = (): ('model_front' | 'model_back' | 'video')[] => {
+        const order: ('model_front' | 'model_back' | 'video')[] = [];
         if (product?.model_front) order.push('model_front');
         if (product?.model_back) order.push('model_back');
-        if (product?.raw_front) order.push('raw_front');
-        if (product?.raw_back) order.push('raw_back');
+        order.push('video'); // Always add video slide
         return order;
     };
 
@@ -70,16 +68,20 @@ export const F_Product_Page: React.FC = () => {
         if (!product) return;
         const link = document.createElement('a');
 
-        // Multi-download logic
         const downloadImage = (url: string, name: string) => {
             link.href = url;
             link.download = name;
             link.click();
         };
 
-        if (product.model_front) setTimeout(() => downloadImage(product.model_front!, `model_front_${product.product_id}.jpg`), 100);
-        if (product.model_back) setTimeout(() => downloadImage(product.model_back!, `model_back_${product.product_id}.jpg`), 300);
-        if (product.raw_front) setTimeout(() => downloadImage(product.raw_front!, `raw_front_${product.product_id}.jpg`), 500);
+        // Context-Aware Download
+        if (active_image === 'model_front' && product.model_front) {
+            downloadImage(product.model_front, `model_front_${product.product_id}.jpg`);
+        } else if (active_image === 'model_back' && product.model_back) {
+            downloadImage(product.model_back, `model_back_${product.product_id}.jpg`);
+        } else if (active_image === 'video') {
+            alert("Video generation not yet implemented. Cannot download placeholder.");
+        }
     };
 
     const F_Handle_Delete = async () => {
@@ -105,12 +107,6 @@ export const F_Product_Page: React.FC = () => {
         );
     }
 
-    let current_image_src = product.raw_front;
-    if (active_image === 'model_front' && product.model_front) current_image_src = product.model_front;
-    if (active_image === 'model_back' && product.model_back) current_image_src = product.model_back;
-    if (active_image === 'raw_front' && product.raw_front) current_image_src = product.raw_front;
-    if (active_image === 'raw_back' && product.raw_back) current_image_src = product.raw_back;
-
     const has_multiple_images = F_Get_Image_Order().length > 1;
 
     // Display Data
@@ -135,26 +131,72 @@ export const F_Product_Page: React.FC = () => {
                     <div className="space-y-4">
                         {/* Main Image Container */}
                         <div className="aspect-[3/4] bg-white dark:bg-bg-dark rounded-xl shadow-sm border border-secondary/20 overflow-hidden relative group">
-                            <img
-                                key={active_image} // Force re-render for animation
-                                src={current_image_src}
-                                alt="Main View"
-                                className="w-full h-full object-cover animate-fade-in transition-all duration-500"
-                            />
 
-                            {/* Navigation Arrows (Interactive Gallery) */}
+                            {/* RENDER ACTIVE MEDIA */}
+                            {active_image === 'video' ? (
+                                <div className="w-full h-full relative flex items-center justify-center overflow-hidden">
+                                    {/* Blurred Background (Front Image) */}
+                                    <div
+                                        className="absolute inset-0 bg-cover bg-center blur-md grayscale opacity-50 scale-110"
+                                        style={{ backgroundImage: `url(${product.model_front || product.raw_front})` }}
+                                    ></div>
+                                    <div className="absolute inset-0 bg-black/20"></div>
+
+                                    {/* Create Video Button */}
+                                    <button
+                                        className="relative z-10 flex flex-col items-center gap-4 group/btn transition-transform hover:scale-105 active:scale-95"
+                                        onClick={() => alert("Video Generation Feature Coming Soon!")}
+                                    >
+                                        <div className="p-5 bg-white/10 backdrop-blur-xl rounded-full border border-white/20 shadow-2xl group-hover/btn:bg-white/20 transition-all ring-1 ring-white/10">
+                                            <Video size={40} className="text-white drop-shadow-md" />
+                                        </div>
+                                        <div className="px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 text-white font-bold text-sm tracking-wide shadow-lg uppercase">
+                                            {F_Get_Text('product.create_video')}
+                                        </div>
+                                    </button>
+                                </div>
+                            ) : (
+                                <img
+                                    key={active_image} // Force re-render for animation
+                                    src={active_image === 'model_front' ? product.model_front : (product.model_back || '')}
+                                    alt="Main View"
+                                    className="w-full h-full object-cover animate-fade-in transition-all duration-500"
+                                />
+                            )}
+
+                            {/* Top-Left Actions (Retry & Download) - Hide on Video */}
+                            {active_image !== 'video' && (
+                                <div className="absolute top-4 left-4 flex gap-2 z-20">
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); F_Load_Product(); }}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors"
+                                        title={F_Get_Text('common.retry')}
+                                    >
+                                        <RotateCcw size={18} />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); F_Handle_Download(); }}
+                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-lg transition-colors"
+                                        title={F_Get_Text('product.download')}
+                                    >
+                                        <Download size={18} />
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Navigation Arrows (Interactive Gallery) - ALWAYS VISIBLE & OPAQUE */}
                             {has_multiple_images && (
-                                <div className="absolute inset-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex items-center justify-between px-4 pointer-events-none z-30">
                                     <button
                                         onClick={(e) => { e.stopPropagation(); F_Prev_Image(); }}
-                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
+                                        className="p-3 bg-black/60 text-white rounded-full pointer-events-auto transition-transform hover:scale-110 shadow-lg"
                                         title={F_Get_Text('product.prev_image')}
                                     >
                                         <ChevronLeft size={24} />
                                     </button>
                                     <button
                                         onClick={(e) => { e.stopPropagation(); F_Next_Image(); }}
-                                        className="p-2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full pointer-events-auto transition-transform hover:scale-110"
+                                        className="p-3 bg-black/60 text-white rounded-full pointer-events-auto transition-transform hover:scale-110 shadow-lg"
                                         title={F_Get_Text('product.next_image')}
                                     >
                                         <ChevronRight size={24} />
@@ -191,31 +233,20 @@ export const F_Product_Page: React.FC = () => {
                                 </button>
                             )}
 
-                            {/* Raw Front */}
-                            {product.raw_front && (
-                                <button
-                                    onClick={() => set_active_image('raw_front')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'raw_front'
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-transparent hover:border-secondary/30'
-                                        }`}
-                                >
-                                    <img src={product.raw_front} alt="Raw Front" className="w-full h-full object-cover" />
-                                </button>
-                            )}
-
-                            {/* Raw Back */}
-                            {product.raw_back && (
-                                <button
-                                    onClick={() => set_active_image('raw_back')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'raw_back'
-                                        ? 'border-primary ring-2 ring-primary/20'
-                                        : 'border-transparent hover:border-secondary/30'
-                                        }`}
-                                >
-                                    <img src={product.raw_back} alt="Raw Back" className="w-full h-full object-cover" />
-                                </button>
-                            )}
+                            {/* Video Placeholder Thumbnail */}
+                            <button
+                                onClick={() => set_active_image('video')}
+                                className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative group flex items-center justify-center bg-gray-900 ${active_image === 'video'
+                                    ? 'border-primary ring-2 ring-primary/20'
+                                    : 'border-transparent hover:border-secondary/30'
+                                    }`}
+                            >
+                                <div
+                                    className="absolute inset-0 bg-cover bg-center opacity-50 blur-sm grayscale"
+                                    style={{ backgroundImage: `url(${product.model_front || product.raw_front})` }}
+                                ></div>
+                                <Video size={24} className="text-white relative z-10" />
+                            </button>
                         </div>
                     </div>
 
@@ -354,6 +385,6 @@ export const F_Product_Page: React.FC = () => {
                 />
 
             </div>
-        </F_Main_Template>
+        </F_Main_Template >
     );
 };

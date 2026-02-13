@@ -33,69 +33,161 @@ export class GeminiService {
 
     // --- GÖREV 1 & 2: GÖRSEL ÜRETİM (Gemini 3 Pro Image Preview) ---
     async generateProductOnModel(input: ProductInput): Promise<string> {
-        const productBase64 = input.frontImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-        if (!productBase64) throw new Error("Input Image Missing");
-
-        const prompt = `Dress the mannequin with the garment from the provided raw_front_img file.
-        
-        MANDATORY CONFIGURATION:
-        - Gender: ${input.gender}
-        - Model Age: ${input.age}
-        - Body Type: ${input.fit}
-        - Product Fit: ${input.productFit}
-        - Background: ${input.backgroundColor}
-        - Accessory: ${input.accessory}
-        - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe.
-        - Aspect Ratio: Vertical 3:4 (Portrait).
-        
-        CRITICAL OUTPUT INSTRUCTION:
-        1. Generate a professional, high-fidelity studio photograph.
-        2. The mannequin MUST be shown in a FULL-BODY composition.
-        3. You MUST return the output as a binary image or a raw Base64 string.
-        4. DO NOT provide conversational text or descriptions.
-        
-        NEGATIVE PROMPT: 
-        Do not use plastic mannequins, headless mannequins, ghostly figures, or cartoonish styles. 
-        Do not crop the head or feet. The model must be a REALISTIC HUMAN.`;
-
         return this.modelService.executeWithFailover('image', async () => {
-            console.log(`[GeminiService] VISUAL SYNTHESIS with models/gemini-3-pro-image-preview...`);
+            let attempt = 0;
+            const maxAttempts = 2;
+            let currentFeedback = "";
+            let lastImage = "";
 
-            const genModel = this.ai.getGenerativeModel({ model: 'models/gemini-3-pro-image-preview' });
+            while (attempt < maxAttempts) {
+                attempt++;
+                console.log(`[GeminiService] Generation Attempt ${attempt} (Feedback: ${currentFeedback ? 'YES' : 'NONE'})...`);
 
-            const result = await genModel.generateContent([
-                { text: prompt },
-                { inlineData: { data: productBase64, mimeType: 'image/jpeg' } }
-            ]);
+                const productBase64 = input.frontImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+                if (!productBase64) throw new Error("Input Image Missing");
 
-            const response = await result.response;
+                let prompt = `Dress the mannequin with the garment from the provided raw_front_img file.
+                
+                MANDATORY CONFIGURATION:
+                - Gender: ${input.gender}
+                - Model Age: ${input.age}
+                - Body Type: ${input.fit}
+                - Product Fit: ${input.productFit}
+                - Background: ${input.backgroundColor}
+                - Accessory: ${input.accessory}
+                - Composition: Full-body shot (boydan çekim).
+                - Aspect Ratio: Vertical 3:4 (Portrait).
+                
+                CRITICAL OUTFIT LOGIC:
+                - COMPLETE THE LOOK: If the product is a top (shirt, jacket), YOU MUST generate matching bottom wear (pants/skirt) and shoes.
+                - If the product is bottoms, generate a matching top and shoes.
+                - The style should be cohesive and fashionable.
+                
+                CRITICAL VISUAL INSTRUCTION:
+                1. The model MUST be a **HYPER-REALISTIC LIVING HUMAN**.
+                2. Skin texture must be natural with pores and imperfections.
+                3. EYES must be focused and lifelike.
+                4. HAIR must be detailed and realistic.
+                5. NO PLASTIC/SHINY SKIN. NO MANNEQUIN JOINTS.
+                
+                NEGATIVE PROMPT: 
+                **PLASTIC MANNEQUIN, ARTIFICIAL SKIN, DOLL, GHOST, HEADLESS, CARTOON, SKETCH, BLURRY FACE, DISTORTED EYES, BAD HANDS, MISSING LIMBS, CROPPED HEAD.**
+                Do not use standard store mannequins. The result must look like a high-end fashion magazine photo with a real person.`;
 
-            // 1. Check for Native Image Part (inlineData)
-            if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
-                const parts = result.response.candidates[0].content.parts;
-                const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
-                if (imagePart && imagePart.inlineData) {
-                    return `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                if (currentFeedback) {
+                    prompt += `\n\nCRITICAL FIX INSTRUCTION: The previous generation failed Quality Control. 
+                    REASON: ${currentFeedback}. 
+                    YOU MUST FIX THIS. Ensure the model is a REAL HUMAN.`;
+                }
+
+                const genModel = this.ai.getGenerativeModel({ model: 'models/gemini-3-pro-image-preview' });
+
+                // Prepare inputs (Standard or Retry with Feedback)
+                // For retry, we still use the original raw image as source, but with new prompt 
+                // OR we could do I2I on the failed image if we wanted to "fix" it, 
+                // but usually regenerating from scratch with better prompt is safer for "Ghost" issues.
+                // Let's stick to regenerating from Raw Input with Feedback for now to avoid degradation.
+                const inputParts: any[] = [{ text: prompt }];
+
+                // If this is a retry and we want to do I2I on the FAILED image to fix it?
+                // The plan said: "Input: v1 (The failed image)".
+                // Let's try to include the FAILED v1 as context if available, 
+                // BUT 'gemini-3-pro' might get confused with 2 images (Raw + Failed).
+                // Let's stick to Raw Input + Stronger Prompt for stability first.
+                inputParts.push({ inlineData: { data: productBase64, mimeType: 'image/jpeg' } });
+
+                const result = await genModel.generateContent(inputParts);
+                const response = await result.response;
+
+                let generatedBase64 = "";
+
+                // Extract Image
+                if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
+                    const parts = result.response.candidates[0].content.parts;
+                    const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+                    if (imagePart && imagePart.inlineData) {
+                        generatedBase64 = `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                    }
+                }
+
+                if (!generatedBase64) {
+                    try {
+                        const text = response.text();
+                        const match = text.match(/([A-Za-z0-9+/]{100,})/);
+                        if (match && match[0].length > 1000) generatedBase64 = `data:image/jpeg;base64,${match[0]}`;
+                    } catch (e) { /* Ignore */ }
+                }
+
+                if (!generatedBase64) {
+                    // If generation failed completely, throw (will be caught by executeWithFailover or outer try)
+                    // But here we are inside executeWithFailover.
+                    throw new Error("Gemini 3 Pro Refused/Returned No Image");
+                }
+
+                lastImage = generatedBase64;
+
+                // QC Check
+                console.log("[GeminiService] Running Quality Control...");
+                const qc = await this.checkImageQuality(generatedBase64);
+
+                if (qc.pass) {
+                    console.log("[GeminiService] QC PASSED.");
+                    return generatedBase64;
+                } else {
+                    console.warn(`[GeminiService] QC FAILED: ${qc.reason}`);
+                    currentFeedback = qc.reason || "Unknown quality issue";
+
+                    if (attempt >= maxAttempts) {
+                        console.warn("[GeminiService] Max retries reached. Returning last generated image.");
+                        return lastImage; // Return anyway
+                    }
+                    // Loop continues to Retry
                 }
             }
 
-            // 2. Fallback: Check Text Output for Base64 (User's regex method)
-            let textOutput = "";
-            try { textOutput = response.text(); } catch (e) { /* Ignore if no text */ }
-
-            const base64Regex = /([A-Za-z0-9+/]{100,})/;
-            const match = textOutput.match(base64Regex);
-
-            if (match && match[0].length > 1000) {
-                return `data:image/jpeg;base64,${match[0]}`;
-            }
-
-            // Error Logging
-            throw new Error(`Gemini 3 Pro Refused/Returned Text: "${textOutput.slice(0, 500)}..."`);
-        });
+            return lastImage;
+        }, 'models/gemini-3-pro-image-preview');
     }
 
-    // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ ---
+    // --- QC MODULE (Private) ---
+    private async checkImageQuality(imageBase64: string): Promise<{ pass: boolean, reason?: string }> {
+        try {
+            const cleanBase64 = imageBase64.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+            const model = this.ai.getGenerativeModel({
+                model: 'gemini-2.0-flash',
+                generationConfig: { responseMimeType: "application/json" }
+            });
+
+            const prompt = `Analyze this fashion image strictly.
+            1. Is the model a PHOTOREALISTIC REAL HUMAN? (Plastic mannequins, cartoons, sketches, headless bodies = FAIL).
+            2. Are there any severe anatomical hallucinations (bad hands, missing limbs, distorted facial features)?
+            3. Is the clothing garment clearly visible?
+
+            Return JSON:
+            {
+              "is_real_human": boolean,
+              "has_severe_errors": boolean,
+              "pass": boolean, 
+              "reason": "Short explanation of failure if pass is false"
+            }`;
+
+            const result = await model.generateContent([
+                { text: prompt },
+                { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } }
+            ]);
+
+            const response = JSON.parse(result.response.text());
+            return {
+                pass: response.pass === true,
+                reason: response.reason
+            };
+
+        } catch (e) {
+            console.error("[GeminiService] QC Check Error (Bypassing):", e);
+            return { pass: true }; // Allow pass on QC error to avoid blocking flow
+        }
+    }
+
     // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ (REVISED) ---
     async generateSEOContent(input: ProductInput, lang: string = 'tr'): Promise<{ title: string; description: string }> {
         return this.modelService.executeWithFailover('text', async () => {
@@ -151,7 +243,7 @@ export class GeminiService {
 
             const result = await genModel.generateContent(prompt);
             return JSON.parse(result.response.text());
-        });
+        }, 'gemini-2.5-flash'); // Explicitly track usage for SEO
     }
 
     // --- BACK VIEW (GEMINI 3 PRO - HIGH FIDELITY) ---
@@ -161,63 +253,90 @@ export class GeminiService {
         console.log(`[GeminiService] Generating Back View with ${modelName}...`);
 
         return this.modelService.executeWithFailover('image', async () => {
-            // Validate Inputs
-            const frontBase64 = frontViewImage.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            const backBase64 = input.backImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+            let attempt = 0;
+            const maxAttempts = 2;
+            let currentFeedback = "";
+            let lastImage = "";
 
-            if (!frontBase64) throw new Error("Missing Front Generated Image for reference");
+            while (attempt < maxAttempts) {
+                attempt++;
+                console.log(`[GeminiService] Back View Attempt ${attempt}...`);
 
-            const genModel = this.ai.getGenerativeModel({ model: modelName });
+                // Validate Inputs
+                const frontBase64 = frontViewImage.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+                const backBase64 = input.backImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
-            const prompt = `Generate a high-fidelity studio photograph of the BACK VIEW of the mannequin/product.
-             
-             INPUTS:
-             - Image 1: The generated FRONT VIEW (Reference for style, lighting, mannequin details).
-             - Image 2: The RAW BACK IMAGE (Reference for product details like cuts, labels, patterns).
-             
-             MANDATORY CONFIGURATION:
-             - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe from the back.
-             - Aspect Ratio: Vertical 3:4 (Portrait).
-             - Consistency: The mannequin, lighting, and background MUST MATCH the Front View exactly.
-             
-             CRITICAL OUTPUT INSTRUCTION:
-             1. Return ONLY a binary image.
-             2. DO NOT include any text.
-             `;
+                if (!frontBase64) throw new Error("Missing Front Generated Image for reference");
 
-            const parts: any[] = [{ text: prompt }];
-            // Pushing Front View first as primary style reference
-            parts.push({ inlineData: { data: frontBase64, mimeType: 'image/jpeg' } });
+                const genModel = this.ai.getGenerativeModel({ model: modelName });
 
-            // Pushing Raw Back View if available for details
-            if (backBase64) {
-                parts.push({ inlineData: { data: backBase64, mimeType: 'image/jpeg' } });
-            }
+                let prompt = `Generate a high-fidelity studio photograph of the BACK VIEW of the mannequin/product.
+                 
+                 INPUTS:
+                 - Image 1: The generated FRONT VIEW (Reference for style, lighting, mannequin details).
+                 - Image 2: The RAW BACK IMAGE (Reference for product details like cuts, labels, patterns).
+                 
+                 MANDATORY CONFIGURATION:
+                 - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe from the back.
+                 - Aspect Ratio: Vertical 3:4 (Portrait).
+                 - Consistency: The mannequin, lighting, and background MUST MATCH the Front View exactly.
+                 
+                 CRITICAL OUTPUT INSTRUCTION:
+                 1. Return ONLY a binary image.
+                 2. DO NOT include any text.
+                 `;
 
-            const result = await genModel.generateContent(parts);
-            const response = await result.response;
+                if (currentFeedback) {
+                    prompt += `\n\nCRITICAL FIX INSTRUCTION: The previous generation failed Quality Control. 
+                     REASON: ${currentFeedback}. 
+                     YOU MUST FIX THIS. Ensure the model is a REALISTIC HUMAN and matches the front view style.`;
+                }
 
-            // 1. Check for Native Image Part
-            if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
-                const parts = result.response.candidates[0].content.parts;
-                const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
-                if (imagePart && imagePart.inlineData) {
-                    return `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                const parts: any[] = [{ text: prompt }];
+                parts.push({ inlineData: { data: frontBase64, mimeType: 'image/jpeg' } });
+                if (backBase64) parts.push({ inlineData: { data: backBase64, mimeType: 'image/jpeg' } });
+
+                const result = await genModel.generateContent(parts);
+                const response = await result.response;
+
+                let generatedBase64 = "";
+
+                // Extract
+                if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
+                    const parts = result.response.candidates[0].content.parts;
+                    const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+                    if (imagePart && imagePart.inlineData) {
+                        generatedBase64 = `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                    }
+                }
+
+                if (!generatedBase64) {
+                    try {
+                        const text = response.text();
+                        const match = text.match(/([A-Za-z0-9+/]{100,})/);
+                        if (match && match[0].length > 1000) generatedBase64 = `data:image/jpeg;base64,${match[0]}`;
+                    } catch (e) { /* Ignore */ }
+                }
+
+                if (!generatedBase64) throw new Error("Back View Failed (No Image)");
+
+                lastImage = generatedBase64;
+
+                // QC Check
+                console.log("[GeminiService] Running Quality Control (Back View)...");
+                const qc = await this.checkImageQuality(generatedBase64);
+
+                if (qc.pass) {
+                    console.log("[GeminiService] QC PASSED.");
+                    return generatedBase64;
+                } else {
+                    console.warn(`[GeminiService] QC FAILED: ${qc.reason}`);
+                    currentFeedback = qc.reason || "Unknown quality issue";
+                    if (attempt >= maxAttempts) return lastImage;
                 }
             }
-
-            // 2. Fallback: Text Regex
-            let textOutput = "";
-            try { textOutput = response.text(); } catch (e) { /* Ignore */ }
-            const base64Regex = /([A-Za-z0-9+/]{100,})/;
-            const match = textOutput.match(base64Regex);
-
-            if (match && match[0].length > 1000) {
-                return `data:image/jpeg;base64,${match[0]}`;
-            }
-
-            throw new Error(`Back View Failed (Text Output): "${textOutput.slice(0, 100)}..."`);
-        });
+            return lastImage;
+        }, 'models/gemini-3-pro-image-preview');
     }
 
     // --- VIDEO (Stubbed) ---
@@ -241,7 +360,7 @@ export class GeminiService {
                 { inlineData: { data: cleanBase64, mimeType: 'image/jpeg' } }
             ]);
             return result.response.text();
-        });
+        }, 'gemini-2.0-flash'); // Explicitly track I2I/Analysis usage
     }
 
     // --- HELPERS ---
@@ -301,7 +420,7 @@ export class GeminiService {
             // The 'prompt' passed here is usually constructed from attributes.
             // Ideally we would double-check prompt quality.
             return this.generateImagen(prompt);
-        });
+        }, 'imagen-4.0-fast'); // Explicitly track Imagen usage (if used)
     }
 }
 

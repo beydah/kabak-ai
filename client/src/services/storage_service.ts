@@ -1,11 +1,12 @@
 import { I_Product_Data, I_Error_Log, I_Metric } from '../types/interfaces';
 
 const DB_NAME = 'KabakAI_DB';
-const DB_VERSION = 3; // Increment version to trigger upgrade
+const DB_VERSION = 4; // Increment version to trigger upgrade
 const STORE_PRODUCTS = 'products';
 const STORE_LOGS = 'error_logs';
 const STORE_METRICS = 'metrics';
 const STORE_DRAFTS = 'drafts';
+const STORE_SETTINGS = 'settings';
 
 class StorageService {
     private db: IDBDatabase | null = null;
@@ -38,6 +39,9 @@ class StorageService {
                 if (!db.objectStoreNames.contains(STORE_DRAFTS)) {
                     db.createObjectStore(STORE_DRAFTS);
                 }
+                if (!db.objectStoreNames.contains(STORE_SETTINGS)) {
+                    db.createObjectStore(STORE_SETTINGS);
+                }
             };
         });
     }
@@ -55,6 +59,14 @@ class StorageService {
 
     async getAllMetrics(): Promise<any[]> {
         return this.getAll(STORE_METRICS);
+    }
+
+    async deleteMetric(model_id: string): Promise<void> {
+        await this.delete(STORE_METRICS, model_id);
+    }
+
+    async clearMetrics(): Promise<void> {
+        await this.clear(STORE_METRICS);
     }
 
     // ... (Other methods)
@@ -189,6 +201,30 @@ class StorageService {
 
     async clearDrafts(): Promise<void> {
         await this.clear(STORE_DRAFTS);
+    }
+
+    // SETTINGS / DEFAULTS METHODS
+    async saveStartDefaults(defaults: any): Promise<void> {
+        const db = await this.getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_SETTINGS, 'readwrite');
+            const store = tx.objectStore(STORE_SETTINGS);
+            const req = store.put(defaults, 'new_product_defaults');
+            req.onsuccess = () => resolve();
+            req.onerror = () => reject(req.error);
+        });
+    }
+
+    async getStartDefaults<T>(): Promise<T | null> {
+        const db = await this.getDB();
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(STORE_SETTINGS, 'readonly');
+            const store = tx.objectStore(STORE_SETTINGS);
+            const req = store.get('new_product_defaults');
+            req.onsuccess = () => resolve(req.result || null);
+            // If store doesn't exist yet (migration edge case), return null
+            req.onerror = () => resolve(null);
+        });
     }
 
     // MIGRATION HELPER

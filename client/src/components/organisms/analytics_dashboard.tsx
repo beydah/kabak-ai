@@ -6,11 +6,13 @@ import { F_Text } from '../atoms/text';
 import { F_Get_Text } from '../../utils/i18n_utils';
 
 const MODEL_INFO: Record<string, { rpd: number; desc: string; label: string }> = {
-    'gemini-2.0-flash': { rpd: 1500, desc: 'Unified Text & Visual Logic', label: 'Gemini 2.0 Flash' },
+    'gemini-2.0-flash': { rpd: 1500, desc: 'Visual Analysis', label: 'Gemini 2.0 Flash' },
+    'gemini-2.5-flash': { rpd: 1500, desc: 'Advanced SEO Generation', label: 'Gemini 2.5 Flash' },
+    'gemini-1.5-pro': { rpd: 50, desc: 'Advanced Creative Writing', label: 'Gemini 1.5 Pro' },
+    'models/gemini-3-pro-image-preview': { rpd: 50, desc: 'High-Fidelity VTO', label: 'Gemini 3 Pro' },
     'veo-3.0-generate-001': { rpd: 50, desc: 'Video Generation', label: 'Veo 3.0' },
     // Legacy / Fallback
-    'gemini-1.5-flash': { rpd: 1500, desc: 'Text Fallback', label: 'Gemini 1.5 Flash' },
-    'imagen-3.0-generate-001': { rpd: 0, desc: 'Unavailable', label: 'Imagen 3 (Locked)' },
+    'gemini-1.5-flash': { rpd: 1500, desc: 'Legacy Fallback', label: 'Gemini 1.5 Flash' },
 };
 
 export const F_Analytics_Dashboard: React.FC = () => {
@@ -118,10 +120,7 @@ export const F_Analytics_Dashboard: React.FC = () => {
                 {/* Filters */}
                 <div className="flex items-center gap-3">
                     {/* Storage Status Badge */}
-                    <div className="hidden md:flex items-center gap-2 px-3 py-1.5 bg-green-500/10 text-green-600 dark:text-green-400 rounded-full text-[10px] font-bold border border-green-500/20 shadow-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></div>
-                        DB ACTIVE
-                    </div>
+
 
                     <button
                         onClick={F_Toggle_Currency}

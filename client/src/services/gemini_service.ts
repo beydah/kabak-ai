@@ -45,11 +45,18 @@ export class GeminiService {
         - Product Fit: ${input.productFit}
         - Background: ${input.backgroundColor}
         - Accessory: ${input.accessory}
+        - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe.
+        - Aspect Ratio: Vertical 3:4 (Portrait).
         
         CRITICAL OUTPUT INSTRUCTION:
-        1. Generate a photorealistic image of the model wearing this EXACT garment.
-        2. You MUST return the output as a binary image or a raw Base64 string.
-        3. DO NOT provide conversational text or descriptions.`;
+        1. Generate a professional, high-fidelity studio photograph.
+        2. The mannequin MUST be shown in a FULL-BODY composition.
+        3. You MUST return the output as a binary image or a raw Base64 string.
+        4. DO NOT provide conversational text or descriptions.
+        
+        NEGATIVE PROMPT: 
+        Do not use plastic mannequins, headless mannequins, ghostly figures, or cartoonish styles. 
+        Do not crop the head or feet. The model must be a REALISTIC HUMAN.`;
 
         return this.modelService.executeWithFailover('image', async () => {
             console.log(`[GeminiService] VISUAL SYNTHESIS with models/gemini-3-pro-image-preview...`);
@@ -89,32 +96,58 @@ export class GeminiService {
     }
 
     // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ ---
+    // --- GÖREV 3, 4 & 5: AKILLI SEO VE METİN ÜRETİMİ (REVISED) ---
     async generateSEOContent(input: ProductInput, lang: string = 'tr'): Promise<{ title: string; description: string }> {
         return this.modelService.executeWithFailover('text', async () => {
             const genModel = this.ai.getGenerativeModel({
-                model: 'gemini-2.0-flash',
+                model: 'gemini-2.5-flash', // Updated to 2.5 Flash as requested
                 generationConfig: { responseMimeType: "application/json" }
             });
 
-            // Kullanıcı inputundan kritik bilgileri ayıkla (Beden, Marka, Ürün Tipi)
             const rawDesc = input.seo_context || "";
-            const foundBrand = rawDesc.match(/(Marka|Brand):\s*([a-zA-Z0-9]+)/i)?.[2] || "";
-            const foundSize = rawDesc.match(/(Beden|Size|Ölçü):\s*([a-zA-Z0-9\s/]+)/i)?.[2] || "";
 
-            const prompt = `Sen uzman bir E-ticaret SEO yazarıısın. 
+            // SMART EXTRACTION: Catch more patterns for Brand, Size, Defects
+            const foundBrandMatch = rawDesc.match(/(Marka|Brand)\s*[:\-\s]?\s*([a-zA-Z0-9\s]+)/i);
+            const foundSizeMatch = rawDesc.match(/(Beden|Size|Ölçü)\s*[:\-\s]?\s*([a-zA-Z0-9\s/]+)/i);
+            const foundDefectMatch = rawDesc.match(/(defo|leke|yırtık|kusur|defect|stain|tear)/i);
+            const foundUsageMatch = rawDesc.match(/(yeni|etiketli|ikinci el|kullanılmış|used|new)/i);
+
+            // Extract the actual values or use regex matches directly if simple
+            const brandVal = foundBrandMatch ? foundBrandMatch[2].trim() : "";
+            const sizeVal = foundSizeMatch ? foundSizeMatch[2].trim() : "";
+            const defectVal = foundDefectMatch ? foundDefectMatch[0].trim() : "";
+            const usageVal = foundUsageMatch ? foundUsageMatch[0].trim() : "";
+
+            const prompt = `You are a Senior E-commerce Copywriter and SEO Strategist.
+            Task: Write a compelling, high-converting product description and title.
             
-            INPUT:
-            - Ham Açıklama: ${rawDesc}
-            - Kesim: ${input.productFit}
+            INPUT DATA:
+            - Raw Details: "${rawDesc}"
+            - Product Fit: ${input.productFit}
             
-            KURALLAR:
-            1. Ürün Başlığı: Maksimum 5 kelime. Eğer ham açıklamada Marka (${foundBrand}), Beden (${foundSize}) veya Ürün Tipi (Tshirt, Kazak vb.) varsa MUTLAKA başlıkta geçmeli.
-            2. Ürün Açıklaması: Tam olarak 500 karakter civarında, tek paragraf.
-            3. Bilgi Koruma: Ham açıklamada geçen ölçü, beden ve marka bilgilerini ASLA silme, açıklamaya dahil et.
-            4. Stil: Paragraf içine 5 emoji dağıt, en sona 5 adet hashtag ekle.
+            CRITICAL GUIDELINES:
+            1. Title:
+               - Max 5 words.
+               - MUST include Brand (${brandVal}) and Size (${sizeVal}) if present.
+               - Format: "[Brand] [Size] [Key Feature/Type]" (e.g., "Zara S Beden İpek Gömlek").
             
-            DİL: ${lang === 'tr' ? 'Türkçe' : 'English'}
-            FORMAT: JSON {"title": "...", "description": "..."}`;
+            2. Description:
+               - Length: ~500 characters.
+               - Style: Storytelling. Focus on benefits (comfort, style, versatility) rather than just features.
+               - Structure: Single engaging paragraph.
+               - Tone: Professional, inviting, and trustworthy.
+            
+            3. MANDATORY INCLUSIONS (Data Preservation):
+               ${defectVal ? `- WARNING: You MUST mention the defect ("${defectVal}") clearly but professionally.` : ""}
+               ${brandVal ? `- Mention Brand: "${brandVal}".` : ""}
+               ${sizeVal ? `- Mention Size: "${sizeVal}".` : ""}
+            
+            4. Formatting:
+               - Use exactly 5 emojis distributed naturally.
+               - End with exactly 5 relevant hashtags.
+            
+            OUTPUT LANGUAGE: ${lang === 'tr' ? 'Türkçe' : 'English'}
+            OUTPUT JSON: {"title": "...", "description": "..."}`;
 
             const result = await genModel.generateContent(prompt);
             return JSON.parse(result.response.text());
@@ -231,7 +264,7 @@ export class GeminiService {
     }
 }
 
-export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 'tr' | 'en') => {
+export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 'tr' | 'en', contextOverride?: string) => {
     const service = GeminiService.getInstance();
     const input: ProductInput = {
         gender: p_product.gender ? 'Kadın' : 'Erkek',
@@ -241,7 +274,8 @@ export const F_Generate_SEO_Content = async (p_product: I_Product_Data, lang: 't
         backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
         accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
         frontImage: p_product.raw_front,
-        backImage: p_product.raw_back || ''
+        backImage: p_product.raw_back || '',
+        seo_context: contextOverride || p_product.raw_desc // Use override if provided
     };
     const result = await service.generateSEOContent(input, lang);
     return { title: result.title, description: result.description, tags: [] };

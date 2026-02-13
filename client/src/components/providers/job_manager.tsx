@@ -127,14 +127,13 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                         const { F_Generate_SEO_Content } = await import('../../services/gemini_service');
 
                         // Inject Analysis into Context
-                        // We append analysis to the "raw_desc" or pass via context param?
                         // F_Generate_SEO_Content takes 'product'. Let's update product.seo_context temporarily or permanently?
                         // Interface has 'seo_context'.
                         const richContext = `User Input: ${product.raw_desc}. \nVisual Analysis: ${product.front_analyse} ${product.back_analyse || ''}`;
-                        product.raw_desc = richContext; // Enriched context for SEO
+                        // product.raw_desc = richContext; // Enriched context for SEO
 
                         const lang = product.language_pref || F_Get_Language() || 'en';
-                        const result = await F_Generate_SEO_Content(product, lang as any);
+                        const result = await F_Generate_SEO_Content(product, lang as any, richContext);
 
                         product.product_title = result.title;
                         product.product_desc = result.description;

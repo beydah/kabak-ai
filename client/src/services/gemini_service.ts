@@ -133,7 +133,7 @@ export class GeminiService {
             
             2. Description:
                - Length: ~500 characters.
-               - Style: Storytelling. Focus on benefits (comfort, style, versatility) rather than just features.
+               - Style: Focus on Comfort & Style. Storytelling approach.
                - Structure: Single engaging paragraph.
                - Tone: Professional, inviting, and trustworthy.
             
@@ -143,7 +143,7 @@ export class GeminiService {
                ${sizeVal ? `- Mention Size: "${sizeVal}".` : ""}
             
             4. Formatting:
-               - Use exactly 5 emojis distributed naturally.
+               - EMOJI RULE: Use exactly 5 emojis. Place them naturally BETWEEN sentences or clauses. NOT all at the end.
                - End with exactly 5 relevant hashtags.
             
             OUTPUT LANGUAGE: ${lang === 'tr' ? 'Türkçe' : 'English'}
@@ -154,28 +154,69 @@ export class GeminiService {
         });
     }
 
-    // --- BACK VIEW ---
+    // --- BACK VIEW (GEMINI 3 PRO - HIGH FIDELITY) ---
     async generateBackView(input: ProductInput, frontViewImage: string, seoContext?: string): Promise<string> {
-        const modelName = 'gemini-3-pro-image-preview';
+        // Updated to use the same high-fidelity model as Front View
+        const modelName = 'models/gemini-3-pro-image-preview';
         console.log(`[GeminiService] Generating Back View with ${modelName}...`);
 
-        return this.modelService.executeWithFailover('image', async (model) => {
-            const genModel = this.ai.getGenerativeModel({ model: modelName });
-            const prompt = "Generate consistent back view. (See Front View)";
+        return this.modelService.executeWithFailover('image', async () => {
+            // Validate Inputs
+            const frontBase64 = frontViewImage.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+            const backBase64 = input.backImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
 
-            const p1 = input.backImage?.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
-            const p2 = frontViewImage.replace(/^data:image\/(png|jpeg|webp);base64,/, "");
+            if (!frontBase64) throw new Error("Missing Front Generated Image for reference");
+
+            const genModel = this.ai.getGenerativeModel({ model: modelName });
+
+            const prompt = `Generate a high-fidelity studio photograph of the BACK VIEW of the mannequin/product.
+             
+             INPUTS:
+             - Image 1: The generated FRONT VIEW (Reference for style, lighting, mannequin details).
+             - Image 2: The RAW BACK IMAGE (Reference for product details like cuts, labels, patterns).
+             
+             MANDATORY CONFIGURATION:
+             - Composition: Full-body shot (boydan çekim), showing the mannequin from head to toe from the back.
+             - Aspect Ratio: Vertical 3:4 (Portrait).
+             - Consistency: The mannequin, lighting, and background MUST MATCH the Front View exactly.
+             
+             CRITICAL OUTPUT INSTRUCTION:
+             1. Return ONLY a binary image.
+             2. DO NOT include any text.
+             `;
 
             const parts: any[] = [{ text: prompt }];
-            if (p1) parts.push({ inlineData: { data: p1, mimeType: 'image/jpeg' } });
-            if (p2) parts.push({ inlineData: { data: p2, mimeType: 'image/jpeg' } });
+            // Pushing Front View first as primary style reference
+            parts.push({ inlineData: { data: frontBase64, mimeType: 'image/jpeg' } });
+
+            // Pushing Raw Back View if available for details
+            if (backBase64) {
+                parts.push({ inlineData: { data: backBase64, mimeType: 'image/jpeg' } });
+            }
 
             const result = await genModel.generateContent(parts);
-            const text = result.response.text();
-            if (text && text.length > 1000 && !text.includes(' ')) {
-                return `data:image/jpeg;base64,${text}`;
+            const response = await result.response;
+
+            // 1. Check for Native Image Part
+            if (result.response.candidates && result.response.candidates[0].content && result.response.candidates[0].content.parts) {
+                const parts = result.response.candidates[0].content.parts;
+                const imagePart = parts.find((p: any) => p.inlineData && p.inlineData.data);
+                if (imagePart && imagePart.inlineData) {
+                    return `data:${imagePart.inlineData.mimeType || 'image/jpeg'};base64,${imagePart.inlineData.data}`;
+                }
             }
-            throw new Error("Back View Gen Failed: " + text.slice(0, 50));
+
+            // 2. Fallback: Text Regex
+            let textOutput = "";
+            try { textOutput = response.text(); } catch (e) { /* Ignore */ }
+            const base64Regex = /([A-Za-z0-9+/]{100,})/;
+            const match = textOutput.match(base64Regex);
+
+            if (match && match[0].length > 1000) {
+                return `data:image/jpeg;base64,${match[0]}`;
+            }
+
+            throw new Error(`Back View Failed (Text Output): "${textOutput.slice(0, 100)}..."`);
         });
     }
 
@@ -309,4 +350,19 @@ export const F_Analyze_Image = async (image: string, prompt: string): Promise<st
 export const F_Generate_Pro_Image = async (prompt: string, front: string, back?: string): Promise<string> => {
     const service = GeminiService.getInstance();
     return await service.generateProImage(prompt, front, back);
+};
+
+export const F_Generate_Back_View = async (p_product: I_Product_Data, front_view: string): Promise<string> => {
+    const service = GeminiService.getInstance();
+    const input: ProductInput = {
+        gender: p_product.gender ? 'Kadın' : 'Erkek',
+        age: p_product.age || '30',
+        fit: p_product.vücut_tipi || 'Standart',
+        productFit: p_product.kesim || 'Normal',
+        backgroundColor: (p_product.background as BgOption) || BgOption.STUDIO,
+        accessory: (p_product.aksesuar as Accessory) || Accessory.NONE,
+        frontImage: p_product.raw_front,
+        backImage: p_product.raw_back || ''
+    };
+    return await service.generateBackView(input, front_view);
 };

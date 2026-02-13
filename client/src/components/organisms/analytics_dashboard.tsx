@@ -161,7 +161,8 @@ export const F_Analytics_Dashboard: React.FC = () => {
             {/* Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {metrics.map((m) => {
-                    const info = MODEL_INFO[m.model_id] || { rpd: 1000, desc: 'Unknown Model', label: m.model_id };
+                    if (!MODEL_INFO[m.model_id]) return null; // Hide legacy/unknown models
+                    const info = MODEL_INFO[m.model_id];
                     const data = F_Get_Filtered_Data(m);
 
                     // RPD is always based on TODAY's count, regardless of view mode

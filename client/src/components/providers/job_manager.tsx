@@ -192,16 +192,13 @@ export const F_Job_Provider: React.FC<{ children: React.ReactNode }> = ({ childr
                         await F_Save_Product(product);
                         // }
 
-                        const { F_Generate_Pro_Image } = await import('../../services/gemini_service');
+                        const { F_Generate_Back_View } = await import('../../services/gemini_service');
 
-                        const prompt = `Back view of the same model. 
-                        Consistency: Match the front view model exactly.
-                        Wearing: ${product.product_title} (Back Side).
-                        Details: ${product.back_analyse}.
-                        Environment: Match front view.`;
+                        if (!product.model_front) throw new Error("Missing Front Model Image for Back View Generation");
 
-                        // Stage 5: Consistent Back View (Flash 2.5)
-                        const back_gen = await F_Generate_Pro_Image(prompt, product.raw_back, product.model_front);
+                        // Stage 5: Consistent Back View (Gemini 3 Pro)
+                        // Input: Product Data (contains raw back), Front Generated Image (Reference)
+                        const back_gen = await F_Generate_Back_View(product, product.model_front);
 
                         product.model_back = back_gen;
                         product.back_status = 'completed';

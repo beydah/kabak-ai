@@ -16,7 +16,7 @@ export const F_Product_Page: React.FC = () => {
     const [copied_field, set_copied_field] = useState<string | null>(null);
 
     // State for image switcher
-    const [active_image, set_active_image] = useState<'front' | 'back' | 'model'>('front');
+    const [active_image, set_active_image] = useState<'model_front' | 'model_back' | 'raw_front' | 'raw_back'>('raw_front');
 
     // Modals
     const [is_edit_modal_open, set_is_edit_modal_open] = useState(false);
@@ -31,17 +31,20 @@ export const F_Product_Page: React.FC = () => {
             const data = await F_Get_Product_By_Id(id);
             if (data) {
                 set_product(data);
-                // Priority: Model > Front
-                set_active_image(data.model_front ? 'model' : 'front');
+                // Priority: Model Front > Model Back > Raw Front
+                if (data.model_front) set_active_image('model_front');
+                else if (data.model_back) set_active_image('model_back');
+                else set_active_image('raw_front');
             }
         }
     };
 
-    const F_Get_Image_Order = (): ('model' | 'front' | 'back')[] => {
-        const order: ('model' | 'front' | 'back')[] = [];
-        if (product?.model_front) order.push('model');
-        if (product?.raw_front) order.push('front');
-        if (product?.raw_back) order.push('back');
+    const F_Get_Image_Order = (): ('model_front' | 'model_back' | 'raw_front' | 'raw_back')[] => {
+        const order: ('model_front' | 'model_back' | 'raw_front' | 'raw_back')[] = [];
+        if (product?.model_front) order.push('model_front');
+        if (product?.model_back) order.push('model_back');
+        if (product?.raw_front) order.push('raw_front');
+        if (product?.raw_back) order.push('raw_back');
         return order;
     };
 
@@ -65,24 +68,18 @@ export const F_Product_Page: React.FC = () => {
 
     const F_Handle_Download = () => {
         if (!product) return;
-        if (product.raw_front) {
-            const link = document.createElement('a');
-            link.href = product.raw_front;
-            link.download = `front_${product.product_id}.png`;
-            document.body.appendChild(link);
+        const link = document.createElement('a');
+
+        // Multi-download logic
+        const downloadImage = (url: string, name: string) => {
+            link.href = url;
+            link.download = name;
             link.click();
-            document.body.removeChild(link);
-        }
-        if (product.raw_back) {
-            setTimeout(() => {
-                const link = document.createElement('a');
-                link.href = product.raw_back;
-                link.download = `back_${product.product_id}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            }, 100);
-        }
+        };
+
+        if (product.model_front) setTimeout(() => downloadImage(product.model_front!, `model_front_${product.product_id}.jpg`), 100);
+        if (product.model_back) setTimeout(() => downloadImage(product.model_back!, `model_back_${product.product_id}.jpg`), 300);
+        if (product.raw_front) setTimeout(() => downloadImage(product.raw_front!, `raw_front_${product.product_id}.jpg`), 500);
     };
 
     const F_Handle_Delete = async () => {
@@ -108,11 +105,13 @@ export const F_Product_Page: React.FC = () => {
         );
     }
 
-    const current_image_src =
-        active_image === 'model' && product.model_front ? product.model_front :
-            active_image === 'back' ? (product.raw_back || product.raw_front) :
-                product.raw_front;
-    const has_multiple_images = (product.raw_back || product.model_front);
+    let current_image_src = product.raw_front;
+    if (active_image === 'model_front' && product.model_front) current_image_src = product.model_front;
+    if (active_image === 'model_back' && product.model_back) current_image_src = product.model_back;
+    if (active_image === 'raw_front' && product.raw_front) current_image_src = product.raw_front;
+    if (active_image === 'raw_back' && product.raw_back) current_image_src = product.raw_back;
+
+    const has_multiple_images = F_Get_Image_Order().length > 1;
 
     // Display Data
     const display_title = product.product_title || F_Get_Text('product.title');
@@ -166,40 +165,55 @@ export const F_Product_Page: React.FC = () => {
 
                         {/* Thumbnails Row */}
                         <div className="flex gap-4 overflow-x-auto pb-2">
-                            {/* AI Model Thumb */}
+                            {/* Model Front */}
                             {product.model_front && (
                                 <button
-                                    onClick={() => set_active_image('model')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model'
+                                    onClick={() => set_active_image('model_front')}
+                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_front'
                                         ? 'border-primary ring-2 ring-primary/20'
                                         : 'border-transparent hover:border-secondary/30'
                                         }`}
                                 >
-                                    <img src={product.model_front} alt="AI Model" className="w-full h-full object-cover" />
+                                    <img src={product.model_front} alt="Model Front" className="w-full h-full object-cover" />
                                 </button>
                             )}
 
-                            {/* Front Thumb */}
-                            <button
-                                onClick={() => set_active_image('front')}
-                                className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'front'
-                                    ? 'border-primary ring-2 ring-primary/20'
-                                    : 'border-transparent hover:border-secondary/30'
-                                    }`}
-                            >
-                                <img src={product.raw_front} alt="Front Thumbnail" className="w-full h-full object-cover" />
-                            </button>
-
-                            {/* Back Thumb */}
-                            {product.raw_back && (
+                            {/* Model Back */}
+                            {product.model_back && (
                                 <button
-                                    onClick={() => set_active_image('back')}
-                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'back'
+                                    onClick={() => set_active_image('model_back')}
+                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all relative ${active_image === 'model_back'
                                         ? 'border-primary ring-2 ring-primary/20'
                                         : 'border-transparent hover:border-secondary/30'
                                         }`}
                                 >
-                                    <img src={product.raw_back} alt="Back Thumbnail" className="w-full h-full object-cover" />
+                                    <img src={product.model_back} alt="Model Back" className="w-full h-full object-cover" />
+                                </button>
+                            )}
+
+                            {/* Raw Front */}
+                            {product.raw_front && (
+                                <button
+                                    onClick={() => set_active_image('raw_front')}
+                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'raw_front'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-transparent hover:border-secondary/30'
+                                        }`}
+                                >
+                                    <img src={product.raw_front} alt="Raw Front" className="w-full h-full object-cover" />
+                                </button>
+                            )}
+
+                            {/* Raw Back */}
+                            {product.raw_back && (
+                                <button
+                                    onClick={() => set_active_image('raw_back')}
+                                    className={`flex-shrink-0 w-24 h-32 rounded-lg border-2 overflow-hidden transition-all ${active_image === 'raw_back'
+                                        ? 'border-primary ring-2 ring-primary/20'
+                                        : 'border-transparent hover:border-secondary/30'
+                                        }`}
+                                >
+                                    <img src={product.raw_back} alt="Raw Back" className="w-full h-full object-cover" />
                                 </button>
                             )}
                         </div>

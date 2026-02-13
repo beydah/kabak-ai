@@ -65,7 +65,8 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
     // If View is Front AND Generated Image exists -> Show Generated (Priority 1)
     // Else -> Show Raw Front (Priority 2)
     const display_front = p_product.model_front || p_product.raw_front;
-    const display_image = current_view === 'front' ? display_front : p_product.raw_back;
+    const display_back = p_product.model_back || p_product.raw_back;
+    const display_image = current_view === 'front' ? display_front : display_back;
 
     return (
         <>
@@ -93,7 +94,7 @@ export const F_Product_Card: React.FC<Product_Card_Props> = ({ p_product, p_navi
                     {/* Back Image (if exists) */}
                     {has_back_image && (
                         <img
-                            src={p_product.raw_back}
+                            src={display_back}
                             alt="back"
                             className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out group-hover:scale-110 
                                 ${current_view === 'back' ? 'opacity-100 z-10' : 'opacity-0 z-0'}
